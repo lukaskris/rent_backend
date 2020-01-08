@@ -6,7 +6,6 @@ from django.db import models
 # Create your models here.
 
 class Employees(models.Model):
-    id = models.AutoField()
     name = models.CharField(max_length=200)
     phone = models.TextField()
     email = models.TextField()
@@ -14,7 +13,6 @@ class Employees(models.Model):
 
 # Users model
 class Users(models.Model):
-    id = models.AutoField()
     username = models.CharField(max_length=200)
     password = models.CharField(max_length=200)
     email = models.CharField(max_length=200)
@@ -27,7 +25,6 @@ class Users(models.Model):
 
 # Products model
 class Products(models.Model):
-    id = models.AutoField()
     name = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
@@ -39,8 +36,8 @@ class Products(models.Model):
     contact_person_name = models.CharField(max_length=200)
     contact_person_phone = models.CharField(max_length=200)
 
+# Product detail model
 class ProductsDetail(models.Model):
-    id = models.AutoField()
     parent_id = models.CharField(max_length=200)
     type_selling = models.ForeignKey(
         'Features',
@@ -49,10 +46,9 @@ class ProductsDetail(models.Model):
     price = models.DecimalField(max_digits=12, decimal_places=2)
 
 class ProductsDetailFeatures(models.Model):
-    id = models.AutoField()
-    features models.ForeignKey(
+    features = models.ForeignKey(
         'Features',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
     product_detail = models.ForeignKey(
         'ProductsDetail'
@@ -60,7 +56,6 @@ class ProductsDetailFeatures(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
 
 class Features(models.Model): #laundry cuci ac dll
-    id = models.AutoField()
     name = models.TextField()
     status = models.BooleanField() # 0 1 active or not
     created_at = models.DateTimeField(auto_now_add=True)
@@ -70,12 +65,10 @@ class Features(models.Model): #laundry cuci ac dll
 
 # Type Penjualan
 class TypeSelling(models.Model): # 1 sewa harian, 2 sewa mingguan ..., 5 jual
-    id = models.AutoField()
     name = models.TextField()
 
 # Ads model
 class Ad(models.Model):
-    id = models.AutoField()
     product = models.ForeignKey(
         'Products',
     )
@@ -86,21 +79,18 @@ class Ad(models.Model):
 
 # ads order
 class AdsOrder(models.Model):
-    id = models.AutoField()
     bundle = models.ForeignKey(
         'AdsBundle'
     )
     price = models.DecimalField(max_digits=10, decimal_places=2)
 
 # ads bundle
-class AdsBundle:
-    id = models.AutoField()
+class AdsBundle(models.Model):
     name = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
 
 # Payments header
 class OrderHeader(models.Model):
-    id = models.CharField(max_length=200)
     product = models.ForeignKey(
         'Products',
     )
@@ -110,8 +100,8 @@ class OrderHeader(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     invoice_ref_number = models.TextField()
     grand_total = models.DecimalField(max_digits=10, decimal_places=2)
-    customer = models.ForeignKey(
-        'Customer',
+    user = models.ForeignKey(
+        'Users',
     )
     order_date = models.DateTimeField(auto_now_add=True)
     expired_date = models.DateTimeField()
@@ -124,7 +114,6 @@ class OrderHeader(models.Model):
 
 # Payments detail
 class OrderDetail(models.Model):
-    id = models.AutoField()
     order_header = models.ForeignKey(
         'OrderHeader'
     )
@@ -133,8 +122,8 @@ class OrderDetail(models.Model):
     )
     price = models.DecimalField(max_digits=10, decimal_places=2) #price
 
+# Status order
 class OrderStatus(models.Model):
-    id = models.AutoField()
     name = models.TextField()
 
 def __str__(self):

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+import base64
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -22,11 +23,26 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'e8a746$rb_+its$bgv+g!caznm*o@g8l()m)6q69p$tat@#wnu'
 
+MIDTRANS_MERCHANT_ID = 'G043237726'
+MIDTRANS_SERVER_KEY_SANDBOX = 'SB-Mid-server-m0c2evREDmiUhbZuOAOcJSwk:'
+MIDTRANS_SERVER_KEY_PRODUCTION = 'Mid-server-xMCUy9BUEtlb95SOw9eYJOpj:'
+
+MIDTRANS_SANDBOX = 'https://app.sandbox.midtrans.com/snap/v1/transactions'
+MIDTRANS_PRODUCTION = 'https://app.midtrans.com/snap/v1/transactions'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+TASTYPIE_FULL_DEBUG = True
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2']
+AUTH_USER_MODEL = "api.User"
+APPEND_SLASH=False
+# AUTHENTICATION_BACKENDS = ('api.backends.CustomBackend',)
 
-ALLOWED_HOSTS = []
 
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
+}
 
 # Application definition
 
@@ -37,7 +53,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'api'
+    'tastypie',
+    'rest_framework',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -119,3 +137,24 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+        },
+    },
+}
+
+if DEBUG:
+    # make all loggers use the console.
+    for logger in LOGGING['loggers']:
+        LOGGING['loggers'][logger]['handlers'] = ['console']

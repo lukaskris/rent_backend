@@ -13,9 +13,29 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
-from django.conf.urls import url
+from django.conf.urls import url, include
 from django.contrib import admin
+from tastypie.api import Api
+from rest_framework import routers
+from api_v2 import views
+from api.resources import OrderStatusResource, UserResource, ProductsResource, ProductImagesResource, OrderDetailResource, OrderHeaderResource, AdsOrderResource, AdsResource, FeaturesResource
+
+v1_api = Api(api_name='v1')
+v1_api.register(OrderStatusResource())
+v1_api.register(UserResource())
+v1_api.register(OrderDetailResource())
+v1_api.register(OrderHeaderResource())
+v1_api.register(AdsOrderResource())
+v1_api.register(AdsResource())
+v1_api.register(FeaturesResource())
+v1_api.register(ProductsResource())
+v1_api.register(ProductImagesResource())
+
+v2_api = routers.DefaultRouter()
+v2_api.register(r'users', views.UserViewSet)
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^api/', include(v1_api.urls)),
+    url(r'^api_v2/', include('rest_framework.urls', namespace='rest_framework'))
 ]

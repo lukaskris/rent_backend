@@ -22,6 +22,7 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.http import HttpResponse
 from datetime import datetime, timedelta
+from tastypie.constants import ALL
 
 # models
 from api.models import User
@@ -304,7 +305,9 @@ class OrderHeaderResource(ModelResource):
     class Meta:
         queryset = OrderHeader.objects.all()
         resource_name = 'order'
-        authentication = ApiKeyAuthentication()
+        filtering = {
+            'user_id': ALL
+        }
 
     def prepend_urls(self):
         """ Add the following array of urls to the UserResource base urls """

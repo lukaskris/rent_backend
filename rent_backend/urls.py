@@ -18,7 +18,7 @@ from django.contrib import admin
 from tastypie.api import Api
 from rest_framework import routers
 from api_v2 import views
-from api.resources import OrderStatusResource, UserResource, ProductsResource, ProductImagesResource, OrderDetailResource, OrderHeaderResource, AdsOrderResource, AdsResource, FeaturesResource
+from api.resources import OrderStatusResource, TypeSellingResource, UserResource, ProductsResource, ProductImagesResource, OrderDetailResource, OrderHeaderResource, AdsOrderResource, AdsResource, FeaturesResource
 
 v1_api = Api(api_name='v1')
 v1_api.register(OrderStatusResource())
@@ -29,6 +29,7 @@ v1_api.register(AdsOrderResource())
 v1_api.register(AdsResource())
 v1_api.register(FeaturesResource())
 v1_api.register(ProductsResource())
+v1_api.register(TypeSellingResource())
 v1_api.register(ProductImagesResource())
 
 v2_api = routers.DefaultRouter()

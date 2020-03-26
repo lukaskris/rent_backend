@@ -81,7 +81,7 @@ class Products(models.Model):
 
 # Images models
 class ProductImages(models.Model):
-    product = models.ForeignKey(Products, on_delete=models.PROTECT)
+    product = models.ForeignKey(Products, on_delete=models.PROTECT, related_name='product')
     image = models.FileField(upload_to='images/products/', verbose_name='Products')
 
 class Features(models.Model): #laundry cuci ac dll
@@ -114,7 +114,7 @@ class AdsOrder(models.Model):
 
 # Product detail model
 class ProductsDetail(models.Model):
-    product = models.ForeignKey(Products, on_delete=models.PROTECT, default=None)
+    product = models.ForeignKey(Products, on_delete=models.PROTECT, default=None, related_name='product_detail')
     type_selling = models.ForeignKey(Features, on_delete=models.PROTECT)
     price = models.DecimalField(max_digits=12, decimal_places=2)
 

@@ -14,7 +14,7 @@ from tastypie.resources import ModelResource
 from tastypie.paginator import Paginator
 from django.db.models import signals
 from tastypie.models import create_api_key
-from api.models import OrderStatus, User, Products, Features, Ads, AdsOrder, OrderHeader, OrderDetail, ProductImages
+from api.models import OrderStatus, User, Products, Features, Ads, AdsOrder, OrderHeader, TypeSelling, OrderDetail, ProductImages, ProductsDetail
 from django.contrib.auth.hashers import make_password
 from django.conf.urls import url
 from django.contrib.auth import authenticate, login, logout
@@ -231,6 +231,13 @@ class UserResource(ModelResource):
         # try to geet the user by email
         try:
             user = User.objects.get(email=email)
+            print(user)
+            return JsonResponse({
+                'objects': [],
+                'error': {
+                    "message": "This email is already registered"
+                }
+            }, content_type='application/json', status=400)
         except User.DoesNotExist:
             # the user with this email does not exist
             # create a new user
@@ -259,16 +266,6 @@ class UserResource(ModelResource):
                 }
             }, content_type='application/json', status=200)
 
-class ProductsResource(ModelResource):
-    created_by_id = fields.IntegerField(attribute='created_by_id', null=False)
-    class Meta:
-        queryset = Products.objects.all()
-        resource_name = 'products'
-        paginator_class = Paginator
-        allowed_methods = ['get', 'post']
-        always_return_data = True
-        authorization = Authorization()
-
 class ProductImagesResource(MultipartResource, ModelResource):
     product_id = fields.IntegerField(attribute='product_id', null=False)
     class Meta:
@@ -276,6 +273,28 @@ class ProductImagesResource(MultipartResource, ModelResource):
         resource_name = 'product_images'
         authorization = Authorization()
         always_return_data = True
+
+class ProductDetailsResource(ModelResource):
+    class Meta:
+        queryset = ProductsDetail.objects.all()
+        resource_name = 'product_details'
+
+class TypeSellingResource(ModelResource):
+    class Meta:
+        queryset = TypeSelling.objects.all()
+        resource_name = 'type_selling'
+
+class ProductsResource(ModelResource):
+    created_by_id = fields.IntegerField(attribute='created_by_id', null=False)
+    product_images = fields.ToManyField(ProductImagesResource, 'product', full=True, null=True)
+    product_details = fields.ToManyField(ProductDetailsResource, 'product_detail', full=True, null=True)
+    class Meta:
+        queryset = Products.objects.all()
+        resource_name = 'products'
+        paginator_class = Paginator
+        allowed_methods = ['get', 'post']
+        always_return_data = True
+
 
 class FeaturesResource(ModelResource):
     class Meta:
@@ -299,7 +318,7 @@ class OrderStatusResource(ModelResource):
     class Meta:
         queryset = OrderStatus.objects.all()
         resource_name = 'order_status'
-        authentication = ApiKeyAuthentication()
+
 
 class OrderHeaderResource(ModelResource):
     class Meta:

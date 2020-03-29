@@ -137,6 +137,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/var/www/static/'     # Used to get static resources from web server
+MEDIA_URL = '/media/'                # Used to include media items in web pages
+MEDIA_ROOT = './'       # Used to get media items from web server
 
 LOGGING = {
     'version': 1,

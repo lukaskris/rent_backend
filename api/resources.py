@@ -14,7 +14,7 @@ from tastypie.resources import ModelResource
 from tastypie.paginator import Paginator
 from django.db.models import signals
 from tastypie.models import create_api_key
-from api.models import OrderStatus, User, Products, Features, Ads, AdsOrder, OrderHeader, TypeSelling, OrderDetail, ProductImages, ProductsDetail
+from api.models import OrderStatus, User, Products, Features, Ads, AdsBundle, AdsOrder, OrderHeader, TypeSelling, OrderDetail, ProductImages, ProductsDetail
 from django.contrib.auth.hashers import make_password
 from django.conf.urls import url
 from django.contrib.auth import authenticate, login, logout
@@ -70,6 +70,7 @@ class UserResource(ModelResource):
         resource_name = 'users'
         allowed_methods = ['get', 'post']
         always_return_data = True
+        excludes = ('password', 'is_superuser', 'is_active', 'date_joined')
 
     def prepend_urls(self):
         """ Add the following array of urls to the UserResource base urls """
@@ -240,31 +241,44 @@ class UserResource(ModelResource):
             }, content_type='application/json', status=400)
         except User.DoesNotExist:
             # the user with this email does not exist
-            # create a new user
-            user = User.objects.create(
-                email=email,
-                name=data.get('name', ''),
-                phone_number=data['phone_number'],
-                is_staff=data['is_staff'])
-            user.set_password(data['password'])
-            user.save()
+            try:
+                user = User.objects.get(phone_number=data['phone_number'])
 
-        user = authenticate(email=email, password=data['password'])
-
-        try:
-            login(bundle.request, user)
-            return JsonResponse({
-                'meta': {},
-                'objects': [],
-                'error': {}
-            }, content_type='application/json', status=200)
-        except:
-            return JsonResponse({
-                'objects': [],
-                'error': {
-                    "message": "This email is already registered"
-                }
-            }, content_type='application/json', status=200)
+                return JsonResponse({
+                    'objects': [],
+                    'error': {
+                        "message": "This phone is already registered"
+                    }
+                }, content_type='application/json', status=400)
+            except User.DoesNotExist:
+                # create a new user
+                user = User.objects.create(
+                    email=email,
+                    name=data.get('name', ''),
+                    phone_number=data['phone_number'],
+                    is_staff=data['is_staff'])
+                user.set_password(data['password'])
+                user.save()
+                user = authenticate(email=email, password=data['password'])
+                login(request, user)
+                print('UserResource.Register: login successful')
+                return JsonResponse({
+                    'meta': {
+                        'message': ''
+                    },
+                    'objects': [
+                        {
+                            'id': user.id,
+                            'email': email,
+                            'password': password,
+                            'name': user.name,
+                            'is_staff': int(user.is_staff == True),
+                            'phone_number': str(user.phone_number),
+                            'image_url': str(user.image_url)
+                        }
+                    ],
+                    'error': {}
+                }, content_type='application/json', status=200)
 
 class ProductImagesResource(MultipartResource, ModelResource):
     product_id = fields.IntegerField(attribute='product_id', null=False)
@@ -275,9 +289,12 @@ class ProductImagesResource(MultipartResource, ModelResource):
         always_return_data = True
 
 class ProductDetailsResource(ModelResource):
+    product_id = fields.IntegerField(attribute='product_id', null=False)
     class Meta:
         queryset = ProductsDetail.objects.all()
         resource_name = 'product_details'
+        authorization = Authorization()
+        always_return_data = True
 
 class TypeSellingResource(ModelResource):
     class Meta:
@@ -285,14 +302,24 @@ class TypeSellingResource(ModelResource):
         resource_name = 'type_selling'
 
 class ProductsResource(ModelResource):
-    created_by_id = fields.IntegerField(attribute='created_by_id', null=False)
+    created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
+    product_images = fields.ToManyField(ProductImagesResource, 'product_set', full=True, null=True)
+    product_details = fields.ToManyField(ProductDetailsResource, 'product_set', full=True, null=True)
+    class Meta:
+        queryset = Products.objects.all()
+        resource_name = 'products'
+        allowed_methods = ['get', 'post', 'put']
+        always_return_data = True
+        authorization = Authorization() # THIS IS IMPORTANT
+
+class SearchResource(ModelResource):
+    created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
     product_images = fields.ToManyField(ProductImagesResource, 'product', full=True, null=True)
     product_details = fields.ToManyField(ProductDetailsResource, 'product_detail', full=True, null=True)
     class Meta:
         queryset = Products.objects.all()
-        resource_name = 'products'
-        paginator_class = Paginator
-        allowed_methods = ['get', 'post']
+        resource_name = 'search'
+        allowed_methods = ['get']
         always_return_data = True
 
 
@@ -300,19 +327,24 @@ class FeaturesResource(ModelResource):
     class Meta:
         queryset = Features.objects.all()
         resource_name = 'features'
-        authentication = ApiKeyAuthentication()
 
 class AdsResource(ModelResource):
     class Meta:
         queryset = Ads.objects.all()
         resource_name = 'ads'
-        authentication = ApiKeyAuthentication()
+
+class AdsBundleResource(ModelResource):
+    class Meta:
+        queryset = AdsBundle.objects.all()
+        allowed_methods = ['get', 'post', 'put']
+        authorization = Authorization() # THIS IS IMPORTANT
+        resource_name = 'ads_bundle'
+        always_return_data = True
 
 class AdsOrderResource(ModelResource):
     class Meta:
         queryset = AdsOrder.objects.all()
         resource_name = 'ads_order'
-        authentication = ApiKeyAuthentication()
 
 class OrderStatusResource(ModelResource):
     class Meta:

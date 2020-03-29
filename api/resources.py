@@ -303,8 +303,8 @@ class TypeSellingResource(ModelResource):
 
 class ProductsResource(ModelResource):
     created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
-    product_images = fields.ToManyField(ProductImagesResource, 'product_set', full=True, null=True)
-    product_details = fields.ToManyField(ProductDetailsResource, 'product_set', full=True, null=True)
+    product_images = fields.ToManyField(ProductImagesResource, 'product_images', full=True, null=True)
+    product_details = fields.ToManyField(ProductDetailsResource, 'product_detail', full=True, null=True)
     class Meta:
         queryset = Products.objects.all()
         resource_name = 'products'

@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 # Register your models here.
-from api.models import User, Products, Features, TypeSelling, Ads, AdsOrder, AdsBundle, OrderHeader
+from api.models import User, Product, Features, TypeSelling, Ads, AdsOrder, AdsBundle, OrderHeader
 
 class UserAdmin(BaseUserAdmin):
     fieldsets = (
@@ -36,7 +36,7 @@ class UserAdmin(BaseUserAdmin):
 
 
 admin.site.register(User, UserAdmin)
-admin.site.register(Products)
+admin.site.register(Product)
 admin.site.register(Features)
 admin.site.register(TypeSelling)
 admin.site.register(Ads)

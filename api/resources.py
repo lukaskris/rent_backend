@@ -14,7 +14,7 @@ from tastypie.resources import ModelResource
 from tastypie.paginator import Paginator
 from django.db.models import signals
 from tastypie.models import create_api_key
-from api.models import OrderStatus, User, Products, Features, Ads, AdsBundle, AdsOrder, OrderHeader, TypeSelling, OrderDetail, ProductImages, ProductsDetail
+from api.models import OrderStatus, User, Product, Features, Ads, AdsBundle, AdsOrder, OrderHeader, TypeSelling, OrderDetail, ProductImages, ProductDetail
 from django.contrib.auth.hashers import make_password
 from django.conf.urls import url
 from django.contrib.auth import authenticate, login, logout
@@ -35,17 +35,14 @@ logger = logging.getLogger('api.user')
 class MultipartResource(object):
 
     def deserialize(self, request, data, format=None):
-
         if not format:
             format = request.META.get('CONTENT_TYPE', 'application/json')
-
-
-
         if format == 'application/x-www-form-urlencoded':
             return request.POST
 
         if format.startswith('multipart/form-data'):
             multipart_data = request.POST.copy()
+            print(request.FILES)
             multipart_data.update(request.FILES)
             return multipart_data
 
@@ -280,44 +277,48 @@ class UserResource(ModelResource):
                     'error': {}
                 }, content_type='application/json', status=200)
 
+class ProductResource(ModelResource):
+    created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
+    product_details = fields.ToManyField('api.resources.ProductDetailResource', 'product_detail', full=True, null=True)
+    images = fields.ToManyField('api.resources.ProductImagesResource', 'product_images', full=True, null=True)
+    class Meta:
+        queryset = Product.objects.all()
+        resource_name = 'product'
+        allowed_methods = ['get', 'post', 'put']
+        always_return_data = True
+        authorization = Authorization() # THIS IS IMPORTANT
+
+class ProductDetailResource(ModelResource):
+    product = fields.ToOneField(ProductResource, 'product')
+    type_selling = fields.ToOneField('api.resources.TypeSellingResource', 'type_selling', full=True, null=False)
+    class Meta:
+        queryset = ProductDetail.objects.all()
+        resource_name = 'products_detail'
+        allowed_methods = ['get', 'post', 'put']
+        authorization = Authorization()
+        always_return_data = True
+
 class ProductImagesResource(MultipartResource, ModelResource):
-    product_id = fields.IntegerField(attribute='product_id', null=False)
+    product = fields.ToOneField('api.resources.ProductResource', 'product')
     class Meta:
         queryset = ProductImages.objects.all()
         resource_name = 'product_images'
         authorization = Authorization()
         always_return_data = True
 
-class ProductDetailsResource(ModelResource):
-    product_id = fields.IntegerField(attribute='product_id', null=False)
-    class Meta:
-        queryset = ProductsDetail.objects.all()
-        resource_name = 'product_details'
-        authorization = Authorization()
-        always_return_data = True
-
 class TypeSellingResource(ModelResource):
+    products_detail = fields.ToManyField('api.resources.ProductDetailResource', 'product_detail_set', related_name='type_selling', null=True)
     class Meta:
         queryset = TypeSelling.objects.all()
         resource_name = 'type_selling'
-
-class ProductsResource(ModelResource):
-    created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
-    product_images = fields.ToManyField(ProductImagesResource, 'product_images', full=True, null=True)
-    product_details = fields.ToManyField(ProductDetailsResource, 'product_detail', full=True, null=True)
-    class Meta:
-        queryset = Products.objects.all()
-        resource_name = 'products'
-        allowed_methods = ['get', 'post', 'put']
-        always_return_data = True
-        authorization = Authorization() # THIS IS IMPORTANT
+        authorization = Authorization()
 
 class SearchResource(ModelResource):
     created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
-    product_images = fields.ToManyField(ProductImagesResource, 'product', full=True, null=True)
-    product_details = fields.ToManyField(ProductDetailsResource, 'product_detail', full=True, null=True)
+    product_details = fields.ToManyField('api.resources.ProductDetailResource', 'product_detail', full=True, null=True)
+    images = fields.ToManyField('api.resources.ProductImagesResource', 'product_images', full=True, null=True)
     class Meta:
-        queryset = Products.objects.all()
+        queryset = Product.objects.all()
         resource_name = 'search'
         allowed_methods = ['get']
         always_return_data = True

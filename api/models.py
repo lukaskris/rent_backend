@@ -6,6 +6,8 @@ from django.db import models
 from django.utils import timezone
 import uuid
 from django.utils.translation import ugettext_lazy as _
+from datetime import datetime
+import os
 
 class UserManager(BaseUserManager):
     def _create_user(self, email, password, is_staff, is_superuser, **extra_fields):
@@ -83,7 +85,7 @@ class OrderStatus(models.Model):
     name = models.TextField()
 
 # Products model
-class Products(models.Model):
+class Product(models.Model):
     name = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -93,24 +95,35 @@ class Products(models.Model):
     contact_person_phone = models.CharField(max_length=200)
 
 # Product detail model
-class ProductsDetail(models.Model):
-    product = models.ForeignKey(Products, on_delete=models.PROTECT, related_name='product_detail')
-    type_selling = models.ForeignKey(Features, on_delete=models.PROTECT)
+class ProductDetail(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='product_detail', blank=True, null=True)
+    type_selling = models.ForeignKey(TypeSelling, on_delete=models.PROTECT)
     price = models.DecimalField(max_digits=12, decimal_places=2)
 
 class ProductsDetailFeatures(models.Model):
     features = models.ForeignKey(Features, on_delete=models.PROTECT)
-    product_detail = models.ForeignKey(ProductsDetail, on_delete=models.PROTECT)
+    product_detail = models.ForeignKey(ProductDetail, on_delete=models.PROTECT)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+
+# file renamer
+def path_and_rename(path):
+    def wrapper(instance, filename):
+        ext = filename.split('.')[-1]
+        now = datetime.now()
+        filename = '{}.{}'.format(now.strftime('%Y%m%d%H%M%S%f'), ext)
+        return os.path.join(path, filename)
+
+    return wrapper
+
 
 # Images models
 class ProductImages(models.Model):
-    product = models.ForeignKey(Products, on_delete=models.PROTECT, related_name='product_images')
-    image = models.FileField(upload_to='images/products/', verbose_name='Products')
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='product_images')
+    image = models.FileField(upload_to=path_and_rename('images/products/'), verbose_name='Products')
 
 # Ads model
 class Ads(models.Model):
-    product = models.ForeignKey(Products, on_delete=models.PROTECT)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
     click = models.IntegerField() #10x click
     expired_date = models.DateTimeField()
     start_date = models.DateTimeField()
@@ -134,7 +147,7 @@ class OrderHeader(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     midtrans_id = models.TextField(default="")
-    product = models.ForeignKey(Products, on_delete=models.PROTECT)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
     type_selling = models.ForeignKey(TypeSelling, on_delete=models.PROTECT)
     invoice_ref_number = models.TextField()
     grand_total = models.DecimalField(max_digits=10, decimal_places=2)

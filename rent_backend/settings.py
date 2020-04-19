@@ -53,10 +53,24 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'fcm_django',
     'tastypie',
     'rest_framework',
     'api',
 ]
+
+FCM_DJANGO_SETTINGS = {
+        "APP_VERBOSE_NAME": "Sewano",
+         # default: _('FCM Django')
+        "FCM_SERVER_KEY": "AAAATgN8f_c:APA91bHObGjKyUmB6lfoNI-Iq1fad18cZP7FPfoe9jPtPAdKOlbcw2gdn3vvo1DFJQCBG2beQVruuHnhwhtIC_a-v-MjDTWHhU1MT4MnCI6Vq0_O20F492s61R4tuOINlRQp6qNj-meT",
+         # true if you want to have only one active device per registered user at a time
+         # default: False
+        "ONE_DEVICE_PER_USER": False,
+         # devices to which notifications cannot be sent,
+         # are deleted upon receiving error response from FCM
+         # default: False
+        "DELETE_INACTIVE_DEVICES": True,
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

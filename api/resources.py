@@ -12,9 +12,9 @@ from tastypie.models import ApiKey
 from tastypie.authentication import Authentication, ApiKeyAuthentication
 from tastypie.resources import ModelResource
 from tastypie.paginator import Paginator
-from django.db.models import signals
+from django.db.models import signals, Sum
 from tastypie.models import create_api_key
-from api.models import OrderStatus, User, Product, Features, Ads, AdsBundle, AdsOrder, OrderHeader, TypeSelling, OrderDetail, ProductImages, ProductDetail
+from api.models import OrderStatus, User, Room, Feature, Notification, RoomAd, AdsBundle, AdsOrder, OrderHeader, TypeSelling, OrderDetail, RoomImages, RoomDetail
 from django.contrib.auth.hashers import make_password
 from django.conf.urls import url
 from django.contrib.auth import authenticate, login, logout
@@ -23,6 +23,11 @@ from django.conf import settings
 from django.http import HttpResponse
 from datetime import datetime, timedelta
 from tastypie.constants import ALL
+from django.core import serializers
+from django.core.serializers.json import DjangoJSONEncoder
+from fcm_django.models import FCMDevice
+
+import datetime
 
 # models
 from api.models import User
@@ -42,7 +47,6 @@ class MultipartResource(object):
 
         if format.startswith('multipart/form-data'):
             multipart_data = request.POST.copy()
-            print(request.FILES)
             multipart_data.update(request.FILES)
             return multipart_data
 
@@ -277,37 +281,158 @@ class UserResource(ModelResource):
                     'error': {}
                 }, content_type='application/json', status=200)
 
-class ProductResource(ModelResource):
+class RoomResource(ModelResource):
     created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
-    product_details = fields.ToManyField('api.resources.ProductDetailResource', 'product_detail', full=True, null=True)
-    images = fields.ToManyField('api.resources.ProductImagesResource', 'product_images', full=True, null=True)
+    room_details = fields.ToManyField('api.resources.RoomDetailResource', 'room_detail', full=True, null=True)
+    images = fields.ToManyField('api.resources.RoomImagesResource', 'room_images', full=True, null=True)
     class Meta:
-        queryset = Product.objects.all()
-        resource_name = 'product'
-        allowed_methods = ['get', 'post', 'put']
+        queryset = Room.objects.all()
+        resource_name = 'room'
+        allowed_methods = ['get', 'post', 'put', 'delete']
         always_return_data = True
         authorization = Authorization() # THIS IS IMPORTANT
 
-class ProductDetailResource(ModelResource):
-    product = fields.ToOneField(ProductResource, 'product')
+
+    def prepend_urls(self):
+        """ Add the following array of urls to the UserResource base urls """
+        resource_name = self._meta.resource_name
+        return [
+            # update
+            url(r"^(?P<resource_name>%s)/update%s$" %
+                (resource_name, trailing_slash()),
+                self.wrap_view('update'), name="api_update")
+        ]
+
+    def update(self, request, **kwargs):
+
+        # function for update products
+        try:
+            from django.http.multipartparser import MultiPartParser
+            print("RoomResource.update: masuk")
+            data = self.deserialize(
+                request, request.body,
+                format=request.content_type
+            )
+
+            print('roomResource.update: Body {}'.format(data))
+
+
+            roomId = data.get('room_id', "")
+            productId = data.get('product_id', "")
+            name = data.get('name', '')
+            description = data.get('description', '')
+            contactPersonName = data.get('contact_person_name', '')
+            contactPersonPhone = data.get('contact_person_phone', '')
+            roomDetails = data.get('room_details', [])
+            roomImages = data.get('room_images', [])
+            sqmRoom = data.get('sqm_room', 1)
+            bedroomTotal = data.get('bedroom', 1)
+            bathroomTotal = data.get('bathroom', 1)
+            guestMaximum = data.get('guest_maximum', 1)
+
+            print("RoomResource.update: {}".format(roomId))
+            print("RoomResource.update: {}".format("prepare update"))
+            Room.objects.filter(pk=roomId).update(
+                name=name,
+                description=description,
+                contact_person_name=contactPersonName,
+                contact_person_phone=contactPersonPhone,
+                sqm_room = sqmRoom,
+                bedroom_total = bedroomTotal,
+                bathroom_total = bathroomTotal,
+                guest_maximum = guestMaximum
+            )
+
+            for roomDetail in roomDetails:
+                id = roomDetail.get("id")
+                price = roomDetail.get("price", '')
+                type_selling_id = roomDetail.get("type_selling_id")
+                print("Loop room detail: {}".format(roomDetail))
+                try:
+                    pd = RoomDetail.objects.get(room_id=roomId, type_selling_id=type_selling_id)
+                    pd.price = price
+                    pd.save()
+                    print("Update room detail: ")
+                    print(roomDetail)
+                except RoomDetail.DoesNotExist:
+                    pd = RoomDetail.objects.create(
+                        price=price,
+                        type_selling_id = type_selling_id,
+                        room_id=roomId
+                    )
+                    pd.save()
+                    print("Create room detail: ")
+                    print(roomDetail)
+            roomDetailIds = list(map(lambda x : x.get("type_selling_id"), roomDetails))
+            deletedRoomDetails = RoomDetail.objects.filter(room_id=roomId).exclude(type_selling_id__in = roomDetailIds)
+            print(deletedRoomDetails)
+            for roomDetail in deletedRoomDetails:
+                roomDetail.delete()
+
+            for roomImage in roomImages:
+                id = roomImage.get('id', -1)
+                RoomDetail.objects.filter(pk=id).delete()
+
+            queryroomDetail = RoomDetail.objects.filter(room_id=roomId).values('id', 'room', 'price', 'type_selling')
+            for roomDetail in queryroomDetail:
+                typeSelling = TypeSelling.objects.filter(id=roomDetail["type_selling"]).values('id', 'name')
+                typeSellingSerialized = json.dumps(list(typeSelling), cls= DjangoJSONEncoder)
+                roomDetail["type_selling"] = json.loads(typeSellingSerialized)[0]
+
+            serializedQuery = json.dumps(list(queryroomDetail), cls=DjangoJSONEncoder)
+            roomDetails = json.loads(serializedQuery)
+
+            queryImages = RoomImages.objects.filter(room_id=roomId).values('id', 'image', 'room')
+            for image in queryImages:
+                image["image"] = "/media/" + image["image"]
+            serializedQuery = json.dumps(list(queryImages), cls=DjangoJSONEncoder)
+
+            images = json.loads(serializedQuery)
+            response = {
+                'product_id': productId,
+                'room_id': roomId,
+                'name': name,
+                'description': description,
+                'contact_person_name': contactPersonName,
+                'contact_person_phone': contactPersonPhone,
+                'room_details': roomDetails,
+                'images': images,
+                'sqm_room': sqmRoom,
+                'bedroom_total': bedroomTotal,
+                'bathroom_total': bathroomTotal,
+                'guest_maximum': guestMaximum
+            }
+            print(response)
+            return JsonResponse(response, content_type='application/json', status=200)
+        except Exception as e:
+            print('roomResource.update onError: {}'.format(str(e)))
+            return JsonResponse({
+                'error': {
+                    "message": str(e)
+                }
+            }, content_type='application/json', status=500)
+
+class RoomDetailResource(ModelResource):
+    room = fields.ToOneField(RoomResource, 'room')
     type_selling = fields.ToOneField('api.resources.TypeSellingResource', 'type_selling', full=True, null=False)
     class Meta:
-        queryset = ProductDetail.objects.all()
-        resource_name = 'products_detail'
-        allowed_methods = ['get', 'post', 'put']
+        queryset = RoomDetail.objects.all()
+        resource_name = 'room_detail'
+        allowed_methods = ['get', 'post', 'put', 'delete']
         authorization = Authorization()
         always_return_data = True
 
-class ProductImagesResource(MultipartResource, ModelResource):
-    product = fields.ToOneField('api.resources.ProductResource', 'product')
+class RoomImagesResource(MultipartResource, ModelResource):
+    room = fields.ToOneField('api.resources.RoomResource', 'room')
     class Meta:
-        queryset = ProductImages.objects.all()
-        resource_name = 'product_images'
+        queryset = RoomImages.objects.all()
+        resource_name = 'room_images'
+        allowed_methods = ['get', 'post', 'delete']
         authorization = Authorization()
         always_return_data = True
 
 class TypeSellingResource(ModelResource):
-    products_detail = fields.ToManyField('api.resources.ProductDetailResource', 'product_detail_set', related_name='type_selling', null=True)
+    room_detail = fields.ToManyField('api.resources.RoomDetailResource', 'room_detail_set', related_name='type_selling', null=True)
     class Meta:
         queryset = TypeSelling.objects.all()
         resource_name = 'type_selling'
@@ -318,26 +443,48 @@ class SearchResource(ModelResource):
     product_details = fields.ToManyField('api.resources.ProductDetailResource', 'product_detail', full=True, null=True)
     images = fields.ToManyField('api.resources.ProductImagesResource', 'product_images', full=True, null=True)
     class Meta:
-        queryset = Product.objects.all()
+        queryset = Room.objects.all()
         resource_name = 'search'
         allowed_methods = ['get']
         always_return_data = True
 
-
 class FeaturesResource(ModelResource):
     class Meta:
-        queryset = Features.objects.all()
+        queryset = Feature.objects.all()
         resource_name = 'features'
 
-class AdsResource(ModelResource):
+class RoomAdResource(ModelResource):
+    room = fields.ToOneField(RoomResource, 'room')
     class Meta:
-        queryset = Ads.objects.all()
-        resource_name = 'ads'
+        queryset = RoomAd.objects.all().filter(active=True, expired_date__gte=datetime.date.today()).aggregate(Sum('click'))
+        resource_name = 'room_ad'
+        object_class = RoomAd
+        allowed_methods = ['get', 'post']
+        authorization = Authorization() # THIS IS IMPORTANT
+
+
+    def prepend_urls(self):
+        """ Add the following array of urls to the UserResource base urls """
+        resource_name = self._meta.resource_name
+        return [
+            # update
+            url(r"^(?P<resource_name>%s)/get_count%s$" %
+                (resource_name, trailing_slash()),
+                self.wrap_view('get_count'), name="api_get_count")
+        ]
+
+    def get_count(self, request, **kwargs):
+        room = RoomAd.objects.all().filter(room_id=request.GET.get('room_id'),active=True, expired_date__gte=datetime.date.today()).aggregate(Sum('click'))
+        print('roomResource.update: room {}'.format(room))
+        return JsonResponse({
+            'click': room["click__sum"]
+        }, content_type='application/json', status=200)
 
 class AdsBundleResource(ModelResource):
+    created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
     class Meta:
         queryset = AdsBundle.objects.all()
-        allowed_methods = ['get', 'post', 'put']
+        allowed_methods = ['get', 'post', 'put', 'delete']
         authorization = Authorization() # THIS IS IMPORTANT
         resource_name = 'ads_bundle'
         always_return_data = True
@@ -398,44 +545,61 @@ class OrderHeaderResource(ModelResource):
             checkIn = customField2[0]
             checkOut = customField2[1]
 
-            order_header = OrderHeader.objects.create(
-                midtrans_id = data["transaction_details"]["order_id"],
-                product_id = data['item_details'][0]['id'],
-                type_selling_id = data['custom_field1'],
-                invoice_ref_number = "INV/10.102039/10102020",
-                grand_total = data['transaction_details']['gross_amount'],
-                user_id = data['custom_field3'],
-                payment_date = datetime.now(),
-                order_status_id = 1,
-                expired_date = datetime.now() + timedelta(days=1),
-                check_in_time = datetime.strptime(checkIn, DATETIME_FORMAT),
-                check_out_time = datetime.strptime(checkOut, DATETIME_FORMAT)
-            )
-            order_header.save()
+            if("custom_field1" in data):
+                order_header = OrderHeader.objects.create(
+                    midtrans_id = data["transaction_details"]["order_id"],
+                    product_id = data['item_details'][0]['id'],
+                    type_selling_id = data['custom_field1'],
+                    invoice_ref_number = "INV/10.102039/10102020",
+                    grand_total = data['transaction_details']['gross_amount'],
+                    user_id = data['custom_field3'],
+                    payment_date = datetime.date.today(),
+                    order_status_id = 1,
+                    expired_date = datetime.date.today() + timedelta(days=1),
+                    check_in_time = datetime.datetime.strptime(checkIn, DATETIME_FORMAT),
+                    check_out_time = datetime.datetime.strptime(checkOut, DATETIME_FORMAT)
+                )
+                order_header.save()
+                response = requests.request("POST", settings.MIDTRANS_SANDBOX, headers=headers, data = json.dumps(data))
+                print(response.json())
+                return HttpResponse(
+                    content=response.content,
+                    status=response.status_code,
+                    content_type=response.headers['Content-Type']
+                )
+            else:
+                order_header = OrderHeader.objects.create(
+                    midtrans_id = data["transaction_details"]["order_id"],
+                    product_id = data['item_details'][0]['id'],
+                    type_selling_id = None,
+                    invoice_ref_number = "INV/10.102039/10102020",
+                    grand_total = data['transaction_details']['gross_amount'],
+                    user_id = data['custom_field3'],
+                    payment_date = datetime.date.today(),
+                    order_status_id = 1,
+                    expired_date = datetime.date.today() + timedelta(days=1),
+                    check_in_time = datetime.date.today(),
+                    check_out_time = datetime.date.today()
+                )
+                order_header.save()
+                response = requests.request("POST", settings.MIDTRANS_SANDBOX, headers=headers, data = json.dumps(data))
+                print(response.json())
+                return HttpResponse(
+                    content=response.content,
+                    status=response.status_code,
+                    content_type=response.headers['Content-Type']
+                )
 
-            # OrderDetail.objects.create(
-            #     order_header = order_header,
-            #     feature =
-            # )
 
-            response = requests.request("POST", settings.MIDTRANS_SANDBOX, headers=headers, data = json.dumps(data))
-            print(response.json())
-
-
-            return HttpResponse(
-                content=response.content,
-                status=response.status_code,
-                content_type=response.headers['Content-Type']
-            )
         except Exception as e:
-            print(e);
+            print("Exception: {}".format(e));
             return HttpResponse(
                 content={
                     'error': {
                         "message": "Internal server error"
                     }
                 },
-                status=404,
+                status=500,
                 content_type="application/json"
             )
 
@@ -444,3 +608,156 @@ class OrderDetailResource(ModelResource):
         queryset = OrderDetail.objects.all()
         resource_name = 'order_detail'
         authentication = ApiKeyAuthentication()
+
+class FCMDeviceResource(ModelResource):
+    class Meta:
+        queryset = FCMDevice.objects.all()
+        resource_name = 'devices'
+        authorization = Authorization()
+
+
+    def prepend_urls(self):
+        """ Add the following array of urls to the UserResource base urls """
+        resource_name = self._meta.resource_name
+        return [
+            # charge
+            url(r"^(?P<resource_name>%s)/register/$" %
+                (resource_name),
+                self.wrap_view('register'), name="api_rregister"),
+        ]
+
+
+    def register(self, request, **kwargs):
+        logger.debug('FCMDeviceResource.register')
+        data = self.deserialize(
+            request, request.body,
+            format=request.content_type
+        )
+        deviceId = data['device_id']
+        registrationId = data['registration_id']
+        userId = data['user_id']
+        name = data['name']
+        type = data['type']
+        print('FCMDeviceResource.register: {}'.format(json.dumps(data)))
+        try:
+            device = FCMDevice.objects.get(device_id=deviceId)
+            print(device)
+            device.registration_id = registrationId
+            device.user_id = userId
+            device.type = type
+            device.name = name
+            device.save()
+            return JsonResponse({
+                'message': 'success'
+            }, content_type='application/json', status=200)
+        except FCMDevice.DoesNotExist:
+            FCMDevice.objects.create(
+                device_id = deviceId,
+                registration_id = registrationId,
+                user_id = userId,
+                type = type,
+                active = True,
+                name = name
+            )
+            return JsonResponse({
+                'message': 'success'
+            }, content_type='application/json', status=200)
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'message': str(e)
+            }, content_type='application/json', status=500)
+
+
+class NotificationResource(ModelResource):
+    class Meta:
+        queryset = Notification.objects.all()
+        resource_name = 'notification'
+        authorization = Authorization()
+
+    def prepend_urls(self):
+        """ Add the following array of urls to the UserResource base urls """
+        resource_name = self._meta.resource_name
+        return [
+            # update
+            url(r"^(?P<resource_name>%s)/handling$" %
+                (resource_name),
+                self.wrap_view('handling'), name="api_handling")
+        ]
+
+    def handling(self, request, **kwargs):
+        try:
+            print("NotificationResource.handling: masuk")
+            data = self.deserialize(
+                request, request.body,
+                format=request.content_type
+            )
+
+            print('NotificationResource.handling: Body {}'.format(data))
+
+            midtrans_id = data.get("order_id", "")
+            payment_type = data.get("payment_type", "")
+            transaction_status = data.get("transaction_status", "")
+
+            payment_number = ""
+            transaction_type = ""
+            order_status_id = 1
+            message_notification = ""
+
+            if payment_type == "bank_transfer" and "permata_va_number" in data.keys():
+                #permata bank
+                transaction_type = "permata"
+                payment_number = data.get("permata_va_number", '')
+            elif payment_type == "bank_transfer" and "va_numbers" in data.keys():
+                va = data.get('va_numbers')
+                payment_number = va[0].get('va_number', '')
+                transaction_type = va[0].get('bank', '')
+            elif payment_type == "bank_transfer" and "bill_key" in data.keys():
+                bill_key = data.get('bill_key', '')
+                biller_code = data.get('biller_code', '')
+                payment_number = bill_key
+                transaction_type = 'mandiri'
+            elif payment_type == "bca_klikpay" or payment_type == 'bca_klikbca':
+                transaction_type = payment_type
+                if "approval_code" in data.keys():
+                    payment_number = data.get('approval_code', '')
+            elif payment_type == "cstore":
+                transaction_type = data.get('store', '')
+                payment_number = data.get('payment_code', '')
+
+            if transaction_status == "pending":
+                message_notification = "Transaksi sedang menunggu pembayaran!."
+                order_status_id = 1
+            elif transaction_status == "settlement":
+                message_notification = "Pembayaran berhasil di verifikasi"
+                order_status_id = 2
+            elif transaction_status == "expire":
+                message_notification = "Pembayaran telah lewat waktu yang ditentukan"
+                order_status_id = 3
+
+            order_header = OrderHeader.objects.get(midtrans_id=midtrans_id)
+            order_header.payment_number = payment_number
+            order_header.payment_type = transaction_type
+            order_header.order_status_id = order_status_id
+            order_header.save()
+
+            Notification.objects.create(
+                user_id = order_header.user_id,
+                message = message_notification,
+                order_header_id = order_header.id
+            )
+
+            device = FCMDevice.objects.get(user_id=order_header.user_id)
+            device.send_message(title="Pembayaran", body=message_notification, data={"order_header_id": order_header.id, "type": "Ad" if order_header.type_selling_id == null else "Room" })
+            return JsonResponse({
+                'success': {
+                    "message": "true"
+                }
+            }, content_type='application/json', status=200)
+        except Exception as e:
+            print('roomResource.update onError: {}'.format(str(e)))
+            return JsonResponse({
+                'error': {
+                    "message": str(e)
+                }
+            }, content_type='application/json', status=500)

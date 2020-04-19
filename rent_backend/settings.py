@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 import base64
+import django_heroku
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -74,6 +75,7 @@ FCM_DJANGO_SETTINGS = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -101,6 +103,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'rent_backend.wsgi.application'
+
 
 
 # Database
@@ -149,9 +152,18 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/var/www/static/'     # Used to get static resources from web server
+STATIC_ROOT = os.path.join(PROJECT_ROOT, 'staticfiles')     # Used to get static resources from web server
+
+# Extra places for collectstatic to find static files.
+STATICFILES_DIRS = (
+    os.path.join(PROJECT_ROOT, 'static'),
+)
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 MEDIA_URL = '/media/'                # Used to include media items in web pages
 MEDIA_ROOT = './'       # Used to get media items from web server
 
@@ -170,6 +182,9 @@ LOGGING = {
         },
     },
 }
+
+# Activate Django-Heroku.
+django_heroku.settings(locals())
 
 if DEBUG:
     # make all loggers use the console.

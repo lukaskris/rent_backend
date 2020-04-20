@@ -456,7 +456,7 @@ class FeaturesResource(ModelResource):
 class RoomAdResource(ModelResource):
     room = fields.ToOneField(RoomResource, 'room')
     class Meta:
-        queryset = RoomAd.objects.all().filter(active=True, expired_date__gte=datetime.date.today()).aggregate(Sum('click'))
+        queryset = RoomAd.objects.all()
         resource_name = 'room_ad'
         object_class = RoomAd
         allowed_methods = ['get', 'post']

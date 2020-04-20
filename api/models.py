@@ -65,7 +65,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_absolute_url(self):
         return "/users/%i/" % (self.pk)
 
-
 class Apartment(models.Model):
     name = models.TextField(default="")
     location = models.TextField()
@@ -112,6 +111,14 @@ class AdsBundle(Product):
     total_click = models.IntegerField()
 
 
+# Ads model
+class RoomAd(models.Model):
+    room = models.ForeignKey(Room, on_delete=models.PROTECT)
+    click = models.IntegerField(default=0) #10x click
+    expired_date = models.DateTimeField()
+    start_date = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
+
 # Product detail model
 class RoomDetail(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='room_detail', blank=True, null=True)
@@ -153,14 +160,6 @@ class Banner(models.Model):
     image = models.FileField(upload_to=path_and_rename_banner, verbose_name='Banner')
     active_at = models.DateTimeField(auto_now_add=False)
     expired_at = models.DateTimeField(auto_now_add=False)
-
-# Ads model
-class RoomAd(models.Model):
-    room = models.ForeignKey(Room, on_delete=models.PROTECT)
-    click = models.IntegerField(default=0) #10x click
-    expired_date = models.DateTimeField()
-    start_date = models.DateTimeField(auto_now_add=True)
-    active = models.BooleanField(default=True)
 
 # ads order
 class AdsOrder(models.Model):

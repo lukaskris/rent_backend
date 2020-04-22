@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 # Register your models here.
-from api.models import User, Room, AdsBundle, Feature, TypeSelling, AdsOrder, OrderHeader
+from api.models import User, Room, AdsBundle, Feature, TypeSelling, AdsOrder, OrderHeader, OrderStatus
 
 class UserAdmin(BaseUserAdmin):
     fieldsets = (
@@ -34,14 +34,24 @@ class UserAdmin(BaseUserAdmin):
     ordering = ('email',)
     filter_horizontal = ('groups', 'user_permissions',)
 
-
 class TypeSellingAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
 
+class AdsBundleAdmin (admin.ModelAdmin):
+    list_display = ('ads_bundle_id', 'name', 'total_click', 'price', )
+
+class RoomAdmin (admin.ModelAdmin):
+    list_display = ('room_id', 'name', 'description', 'contact_person_name', 'contact_person_phone', 'created_by')
+
+class OrderHeaderAdmin (admin.ModelAdmin):
+    list_display = ('midtrans_id', 'invoice_ref_number', 'grand_total', 'order_date', 'expired_date', 'payment_date', 'payment_type', 'payment_number', 'type_selling')
+
+class OrderStatusAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
+
 admin.site.register(User, UserAdmin)
-admin.site.register(Room, admin.ModelAdmin)
-admin.site.register(Feature, admin.ModelAdmin)
+admin.site.register(Room, RoomAdmin)
+admin.site.register(OrderStatus, OrderStatusAdmin)
 admin.site.register(TypeSelling, TypeSellingAdmin)
-admin.site.register(AdsOrder)
-admin.site.register(AdsBundle)
-admin.site.register(OrderHeader)
+admin.site.register(AdsBundle, AdsBundleAdmin)
+admin.site.register(OrderHeader, OrderHeaderAdmin)

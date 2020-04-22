@@ -501,6 +501,8 @@ class OrderStatusResource(ModelResource):
 
 
 class OrderHeaderResource(ModelResource):
+    type_selling = fields.ToOneField(TypeSellingResource, attribute='type_selling', full=True, null=True)
+    order_status = fields.ToOneField(OrderStatusResource, attribute='order_status', full=True, null=True)
     class Meta:
         queryset = OrderHeader.objects.all()
         resource_name = 'order'
@@ -596,7 +598,7 @@ class OrderHeaderResource(ModelResource):
             return HttpResponse(
                 content={
                     'error': {
-                        "message": "Internal server error"
+                        "message": e
                     }
                 },
                 status=500,
@@ -680,7 +682,7 @@ class NotificationResource(ModelResource):
         resource_name = self._meta.resource_name
         return [
             # update
-            url(r"^(?P<resource_name>%s)/handling$" %
+            url(r"^(?P<resource_name>%s)/handling/$" %
                 (resource_name),
                 self.wrap_view('handling'), name="api_handling")
         ]

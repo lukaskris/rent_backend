@@ -14,14 +14,14 @@ from tastypie.resources import ModelResource
 from tastypie.paginator import Paginator
 from django.db.models import signals, Sum
 from tastypie.models import create_api_key
-from api.models import OrderStatus, User, Room, Feature, Notification, RoomAd, AdsBundle, AdsOrder, OrderHeader, TypeSelling, OrderDetail, RoomImages, RoomDetail
+from api.models import OrderStatus, User, Room, Product, Feature, Notification, RoomAd, AdsBundle, AdsOrder, OrderHeader, TypeSelling, OrderDetail, RoomImages, RoomDetail
 from django.contrib.auth.hashers import make_password
 from django.conf.urls import url
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from django.conf import settings
 from django.http import HttpResponse
-from datetime import datetime, timedelta
+from datetime import datetime as dtime, timedelta
 from tastypie.constants import ALL
 from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
@@ -300,7 +300,11 @@ class RoomResource(ModelResource):
             # update
             url(r"^(?P<resource_name>%s)/update%s$" %
                 (resource_name, trailing_slash()),
-                self.wrap_view('update'), name="api_update")
+                self.wrap_view('update'), name="api_update"),
+            # search
+            url(r"^(?P<resource_name>%s)/search%s$" %
+                (resource_name, trailing_slash()),
+                self.wrap_view('search'), name="api_search")
         ]
 
     def update(self, request, **kwargs):
@@ -412,6 +416,59 @@ class RoomResource(ModelResource):
                 }
             }, content_type='application/json', status=500)
 
+    def search(self, request, **kwargs):
+        try:
+            check_in_time = dtime.strptime(request.GET.get('check_in'), '%d%m%Y')
+            check_out_time = dtime.strptime(request.GET.get('check_out'), '%d%m%Y')
+            order_header_set = OrderHeader.objects.values_list('product_id', flat=True).filter(check_in_time=check_in_time, check_out_time=check_out_time)
+            print(order_header_set)
+            query = Room.objects.all().exclude(product_id__in=order_header_set)
+            list_response = []
+            for room in query:
+                queryroomDetail = RoomDetail.objects.filter(room_id=room.room_id).values('id', 'room', 'price', 'type_selling')
+                for roomDetail in queryroomDetail:
+                    typeSelling = TypeSelling.objects.filter(id=roomDetail["type_selling"]).values('id', 'name')
+                    typeSellingSerialized = json.dumps(list(typeSelling), cls= DjangoJSONEncoder)
+                    roomDetail["type_selling"] = json.loads(typeSellingSerialized)[0]
+
+                serializedQuery = json.dumps(list(queryroomDetail), cls=DjangoJSONEncoder)
+                roomDetails = json.loads(serializedQuery)
+
+                queryImages = RoomImages.objects.filter(room_id=room.room_id).values('id', 'image', 'room')
+                for image in queryImages:
+                    image["image"] = "/media/" + image["image"]
+                serializedQuery = json.dumps(list(queryImages), cls=DjangoJSONEncoder)
+
+                images = json.loads(serializedQuery)
+
+                list_response.append({
+                    'product_id': room.product_id,
+                    'room_id': room.room_id,
+                    'name': room.name,
+                    'description': room.description,
+                    'contact_person_name': room.contact_person_name,
+                    'contact_person_phone': room.contact_person_phone,
+                    'room_details': roomDetails,
+                    'images': images,
+                    'sqm_room': room.sqm_room,
+                    'bedroom_total': room.bedroom_total,
+                    'bathroom_total': room.bathroom_total,
+                    'guest_maximum': room.guest_maximum,
+                })
+                print(list_response)
+            return JsonResponse({
+                "objects": list_response
+            }, content_type='application/json', status=200)
+
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'error': {
+                    "message": str(e)
+                }
+            }, content_type='application/json', status=500)
+
+
 class RoomDetailResource(ModelResource):
     room = fields.ToOneField(RoomResource, 'room')
     type_selling = fields.ToOneField('api.resources.TypeSellingResource', 'type_selling', full=True, null=False)
@@ -489,6 +546,15 @@ class AdsBundleResource(ModelResource):
         resource_name = 'ads_bundle'
         always_return_data = True
 
+class ProductResource(ModelResource):
+    created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
+    class Meta:
+        queryset = Product.objects.all()
+        allowed_methods = ['get']
+        authorization = Authorization() # THIS IS IMPORTANT
+        resource_name = 'product'
+        always_return_data = True
+
 class AdsOrderResource(ModelResource):
     class Meta:
         queryset = AdsOrder.objects.all()
@@ -499,10 +565,11 @@ class OrderStatusResource(ModelResource):
         queryset = OrderStatus.objects.all()
         resource_name = 'order_status'
 
-
 class OrderHeaderResource(ModelResource):
     type_selling = fields.ToOneField(TypeSellingResource, attribute='type_selling', full=True, null=True)
     order_status = fields.ToOneField(OrderStatusResource, attribute='order_status', full=True, null=True)
+    product = fields.ToOneField(ProductResource, attribute='product', full=True, null=True)
+
     class Meta:
         queryset = OrderHeader.objects.all()
         resource_name = 'order'
@@ -552,7 +619,6 @@ class OrderHeaderResource(ModelResource):
                     midtrans_id = data["transaction_details"]["order_id"],
                     product_id = data['item_details'][0]['id'],
                     type_selling_id = data['custom_field1'],
-                    invoice_ref_number = "INV/10.102039/10102020",
                     grand_total = data['transaction_details']['gross_amount'],
                     user_id = data['custom_field3'],
                     payment_date = datetime.date.today(),
@@ -574,7 +640,6 @@ class OrderHeaderResource(ModelResource):
                     midtrans_id = data["transaction_details"]["order_id"],
                     product_id = data['item_details'][0]['id'],
                     type_selling_id = None,
-                    invoice_ref_number = "INV/10.102039/10102020",
                     grand_total = data['transaction_details']['gross_amount'],
                     user_id = data['custom_field3'],
                     payment_date = datetime.date.today(),
@@ -670,7 +735,6 @@ class FCMDeviceResource(ModelResource):
                 'message': str(e)
             }, content_type='application/json', status=500)
 
-
 class NotificationResource(ModelResource):
     class Meta:
         queryset = Notification.objects.all()
@@ -733,7 +797,7 @@ class NotificationResource(ModelResource):
             elif transaction_status == "settlement":
                 message_notification = "Pembayaran berhasil di verifikasi"
                 order_status_id = 2
-            elif transaction_status == "expire":
+            elif transaction_status == "expire" or transaction_status == "cancel":
                 message_notification = "Pembayaran telah lewat waktu yang ditentukan"
                 order_status_id = 3
 
@@ -742,15 +806,24 @@ class NotificationResource(ModelResource):
             order_header.payment_type = transaction_type
             order_header.order_status_id = order_status_id
             order_header.save()
+            print("Order header saved {}".format(order_header))
 
             Notification.objects.create(
                 user_id = order_header.user_id,
                 message = message_notification,
                 order_header_id = order_header.id
             )
-
+            print("Notification saved")
             device = FCMDevice.objects.get(user_id=order_header.user_id)
-            device.send_message(title="Pembayaran", body=message_notification, data={"order_header_id": order_header.id, "type": "Ad" if order_header.type_selling_id == null else "Room" })
+
+            print("Device get {}".format(device))
+            print("Order header type selling {}".format(order_header.type_selling_id))
+            message_data = {
+                "order_header_id": str(order_header.id),
+                "type": "Ad" if order_header.type_selling_id == None else "Room"
+            }
+            print("Message data {}".format(message_data))
+            device.send_message(title="Pembayaran", body=message_notification, data=message_data)
             return JsonResponse({
                 'success': {
                     "message": "true"

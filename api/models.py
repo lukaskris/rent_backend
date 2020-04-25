@@ -172,6 +172,28 @@ class AdsOrder(models.Model):
     payment_date = models.DateTimeField(default=None)
     order_status = models.ForeignKey(OrderStatus, on_delete=models.PROTECT, default=None)
 
+
+def auto_increment_invoice():
+    orderHeader = OrderHeader.objects.all().order_by('order_date').last()
+    # "SE/2020/04/00001"
+    import datetime as date
+    monthFormat = str(date.date.today().month)
+    currentFormat = "SE/" + str(date.date.today().year) + "/" + (2 - len(monthFormat)) * "0" + monthFormat + "/"
+    formatSplit = orderHeader.invoice_ref_number.split('/')
+    if not orderHeader:
+        return currentFormat + "00001"
+
+    if formatSplit[1] != str(date.date.today().year) and formatSplit[2] != str(date.date.today().month):
+        return currentFormat + "00001"
+
+    invoice_no = orderHeader.invoice_ref_number
+    invoice_int = int(invoice_no.split(currentFormat)[-1])
+    new_invoice_int = invoice_int + 1
+    width = 5
+    formatted = (width - len(str(new_invoice_int))) * "0" + str(new_invoice_int)
+    new_invoice_no = currentFormat + str(formatted)
+    return new_invoice_no
+
 # Payments header
 class OrderHeader(models.Model):
     class Meta:
@@ -181,7 +203,7 @@ class OrderHeader(models.Model):
     midtrans_id = models.TextField(default="")
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
     type_selling = models.ForeignKey(TypeSelling, on_delete=models.DO_NOTHING, default=None, blank=None, null=True)
-    invoice_ref_number = models.TextField()
+    invoice_ref_number = models.CharField(max_length=500, default=auto_increment_invoice, null=True, blank=True)
     grand_total = models.DecimalField(max_digits=10, decimal_places=2)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     order_date = models.DateTimeField(auto_now_add=True)

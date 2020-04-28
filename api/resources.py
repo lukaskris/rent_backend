@@ -574,7 +574,8 @@ class OrderHeaderResource(ModelResource):
         queryset = OrderHeader.objects.all()
         resource_name = 'order'
         filtering = {
-            'user_id': ALL
+            'user_id': ALL,
+            'id': ['exact']
         }
 
     def prepend_urls(self):

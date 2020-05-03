@@ -156,7 +156,6 @@ class RoomImages(models.Model):
     image = models.FileField(upload_to=path_and_rename_products, verbose_name='Room')
 
 class Banner(models.Model):
-    url = models.TextField()
     image = models.FileField(upload_to=path_and_rename_banner, verbose_name='Banner')
     active_at = models.DateTimeField(auto_now_add=False)
     expired_at = models.DateTimeField(auto_now_add=False)

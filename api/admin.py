@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 # Register your models here.
-from api.models import User, Room, AdsBundle, Feature, TypeSelling, AdsOrder, OrderHeader, OrderStatus
+from api.models import User, Room, AdsBundle, Feature, TypeSelling, AdsOrder, OrderHeader, OrderStatus, Apartment, Banner
 
 class UserAdmin(BaseUserAdmin):
     fieldsets = (
@@ -49,9 +49,17 @@ class OrderHeaderAdmin (admin.ModelAdmin):
 class OrderStatusAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
 
+class ApartmentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'location')
+
+class BannerAdmin(admin.ModelAdmin):
+    list_display = ('active_at', 'expired_at', 'image')
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Room, RoomAdmin)
 admin.site.register(OrderStatus, OrderStatusAdmin)
 admin.site.register(TypeSelling, TypeSellingAdmin)
 admin.site.register(AdsBundle, AdsBundleAdmin)
 admin.site.register(OrderHeader, OrderHeaderAdmin)
+admin.site.register(Apartment, ApartmentAdmin)
+admin.site.register(Banner, BannerAdmin)

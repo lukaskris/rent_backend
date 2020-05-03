@@ -12,9 +12,9 @@ from tastypie.models import ApiKey
 from tastypie.authentication import Authentication, ApiKeyAuthentication
 from tastypie.resources import ModelResource
 from tastypie.paginator import Paginator
-from django.db.models import signals, Sum
+from django.db.models import signals, Sum, Count, Case, When, IntegerField
 from tastypie.models import create_api_key
-from api.models import OrderStatus, User, Room, Product, Feature, Notification, RoomAd, AdsBundle, AdsOrder, OrderHeader, TypeSelling, OrderDetail, RoomImages, RoomDetail
+from api.models import Apartment, OrderStatus, User, Room, Banner, Product, Feature, Notification, RoomAd, AdsBundle, AdsOrder, OrderHeader, TypeSelling, OrderDetail, RoomImages, RoomDetail
 from django.contrib.auth.hashers import make_password
 from django.conf.urls import url
 from django.contrib.auth import authenticate, login, logout
@@ -281,6 +281,21 @@ class UserResource(ModelResource):
                     'error': {}
                 }, content_type='application/json', status=200)
 
+class Apartment(ModelResource):
+    class Meta:
+        queryset = Apartment.objects.all()
+        resource_name = 'apartment'
+        always_return_data = True
+        authorization = Authorization()
+
+class BannerResource(ModelResource):
+    class Meta:
+        queryset = Banner.objects.all().filter(active_at__gte=datetime.datetime.now(), expired_at__lte=datetime.datetime.now())
+        resource_name = 'banner'
+        allowed_methods = ['get']
+        always_return_data = True
+        authorization = Authorization()
+
 class RoomResource(ModelResource):
     created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
     room_details = fields.ToManyField('api.resources.RoomDetailResource', 'room_detail', full=True, null=True)
@@ -304,7 +319,11 @@ class RoomResource(ModelResource):
             # search
             url(r"^(?P<resource_name>%s)/search%s$" %
                 (resource_name, trailing_slash()),
-                self.wrap_view('search'), name="api_search")
+                self.wrap_view('search'), name="api_search"),
+            # search
+            url(r"^(?P<resource_name>%s)/recommendation%s$" %
+                (resource_name, trailing_slash()),
+                self.wrap_view('recommendation'), name="api_recommendation")
         ]
 
     def update(self, request, **kwargs):
@@ -420,9 +439,9 @@ class RoomResource(ModelResource):
         try:
             check_in_time = dtime.strptime(request.GET.get('check_in'), '%d%m%Y')
             check_out_time = dtime.strptime(request.GET.get('check_out'), '%d%m%Y')
-            order_header_set = OrderHeader.objects.values_list('product_id', flat=True).filter(check_in_time=check_in_time, check_out_time=check_out_time)
+            order_header_set = OrderHeader.objects.values_list('product_id', flat=True).filter(check_in_time=check_in_time, check_out_time=check_out_time, type_selling__isnull=False, order_status_id__in=[1,2])
             print(order_header_set)
-            query = Room.objects.all().exclude(product_id__in=order_header_set)
+            query = Room.objects.filter(status=True).exclude(product_id__in=order_header_set)
             list_response = []
             for room in query:
                 queryroomDetail = RoomDetail.objects.filter(room_id=room.room_id).values('id', 'room', 'price', 'type_selling')
@@ -468,6 +487,76 @@ class RoomResource(ModelResource):
                 }
             }, content_type='application/json', status=500)
 
+    def recommendation(self, request, **kwargs):
+        try:
+            order_header_set = OrderHeader.objects.filter(order_status_id__in=[1,2]).values_list('product_id', flat=True).annotate(product_id_count=Count('product_id')).order_by('-product_id')[:2]
+            print("Order header set: {}".format(order_header_set))
+            valid_ads_list = RoomAd.objects.filter(expired_date__gte=datetime.datetime.now()).values_list('room_id', flat=True)[:5]
+            print("Value ads list: {}".format(valid_ads_list))
+
+            ids = []
+            if(len(order_header_set) > 0):
+                for data in  order_header_set:
+                    ids.append(data)
+
+            if(len(valid_ads_list) > 0):
+                for data in valid_ads_list:
+                    ids.append(data)
+            print("List of id: {}".format(ids))
+            if(len(ids) < 5):
+                diff = 5 - len(ids)
+                print("DIFF: {}".format(diff))
+                for id in Room.objects.all().exclude(product_id__in=ids).order_by('room_id').values_list('product_id', flat=True)[:diff]:
+                    ids.append(id)
+                print(ids)
+
+            query = Room.objects.all().filter(product_id__in=ids, status=True) if len(ids) > 0 else Room.objects.filter(status=True).order_by('room_id')[:5]
+
+            list_response = []
+            for room in query:
+                queryroomDetail = RoomDetail.objects.filter(room_id=room.room_id).values('id', 'room', 'price', 'type_selling')
+                for roomDetail in queryroomDetail:
+                    typeSelling = TypeSelling.objects.filter(id=roomDetail["type_selling"]).values('id', 'name')
+                    typeSellingSerialized = json.dumps(list(typeSelling), cls= DjangoJSONEncoder)
+                    roomDetail["type_selling"] = json.loads(typeSellingSerialized)[0]
+
+                serializedQuery = json.dumps(list(queryroomDetail), cls=DjangoJSONEncoder)
+                roomDetails = json.loads(serializedQuery)
+
+                queryImages = RoomImages.objects.filter(room_id=room.room_id).values('id', 'image', 'room')
+                for image in queryImages:
+                    image["image"] = "/media/" + image["image"]
+                serializedQuery = json.dumps(list(queryImages), cls=DjangoJSONEncoder)
+
+                images = json.loads(serializedQuery)
+                list_response.append({
+                    'product_id': room.product_id,
+                    'room_id': room.room_id,
+                    'apartment': room.apartment.name,
+                    'name': room.name,
+                    'description': room.description,
+                    'contact_person_name': room.contact_person_name,
+                    'contact_person_phone': room.contact_person_phone,
+                    'room_details': roomDetails,
+                    'images': images,
+                    'sqm_room': room.sqm_room,
+                    'bedroom_total': room.bedroom_total,
+                    'bathroom_total': room.bathroom_total,
+                    'guest_maximum': room.guest_maximum,
+                })
+                # print(list_response)
+
+            return JsonResponse({
+                "objects": list_response
+            }, content_type='application/json', status=200)
+
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'error': {
+                    "message": str(e)
+                }
+            }, content_type='application/json', status=500)
 
 class RoomDetailResource(ModelResource):
     room = fields.ToOneField(RoomResource, 'room')
@@ -494,16 +583,6 @@ class TypeSellingResource(ModelResource):
         queryset = TypeSelling.objects.all()
         resource_name = 'type_selling'
         authorization = Authorization()
-
-class SearchResource(ModelResource):
-    created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
-    product_details = fields.ToManyField('api.resources.ProductDetailResource', 'product_detail', full=True, null=True)
-    images = fields.ToManyField('api.resources.ProductImagesResource', 'product_images', full=True, null=True)
-    class Meta:
-        queryset = Room.objects.all()
-        resource_name = 'search'
-        allowed_methods = ['get']
-        always_return_data = True
 
 class FeaturesResource(ModelResource):
     class Meta:

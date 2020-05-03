@@ -113,10 +113,10 @@ WSGI_APPLICATION = 'rent_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'dk2bf2h4t10at',
-        'USER': 'pquialajqotuiu',
-        'PASSWORD': '574ae2a507230ab397f3f39a8b97a5db22b6bf74a64a7eda3e6ebb96b35a149c',
-        'HOST': 'ec2-18-233-137-77.compute-1.amazonaws.com',
+        'NAME': 'd706svi8568s1q',
+        'USER': 'saiclqucmgclmp',
+        'PASSWORD': '12dd947a94ce5d178fb57cec11dcebb52cf083836b2fce6770815d259b81383a',
+        'HOST': 'ec2-3-222-150-253.compute-1.amazonaws.com',
         'PORT': '5432',
     }
 }
@@ -146,7 +146,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Jakarta'
 
 USE_I18N = True
 

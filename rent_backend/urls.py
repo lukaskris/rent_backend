@@ -20,7 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework import routers
 from api_v2 import views
-from api.resources import SearchResource, ProductResource, FCMDeviceResource, NotificationResource, RoomDetailResource, AdsBundleResource, OrderStatusResource, TypeSellingResource, UserResource, RoomResource, RoomImagesResource, OrderDetailResource, OrderHeaderResource, AdsOrderResource, RoomAdResource, FeaturesResource
+from api.resources import ProductResource, BannerResource, FCMDeviceResource, NotificationResource, RoomDetailResource, AdsBundleResource, OrderStatusResource, TypeSellingResource, UserResource, RoomResource, RoomImagesResource, OrderDetailResource, OrderHeaderResource, AdsOrderResource, RoomAdResource, FeaturesResource
 
 v1_api = Api(api_name='v1')
 v1_api.register(OrderStatusResource())
@@ -36,8 +36,8 @@ v1_api.register(FeaturesResource())
 v1_api.register(RoomResource())
 v1_api.register(RoomDetailResource())
 v1_api.register(TypeSellingResource())
-v1_api.register(SearchResource())
 v1_api.register(RoomImagesResource())
+v1_api.register(BannerResource())
 v1_api.register(AdsBundleResource())
 
 v2_api = routers.DefaultRouter()

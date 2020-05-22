@@ -18,18 +18,32 @@ from django.contrib import admin
 from tastypie.api import Api
 from django.conf import settings
 from django.conf.urls.static import static
-from rest_framework import routers
-from api_v2 import views
-from api.resources import ProductResource, BannerResource, FCMDeviceResource, NotificationResource, RoomDetailResource, AdsBundleResource, OrderStatusResource, TypeSellingResource, UserResource, RoomResource, RoomImagesResource, OrderDetailResource, OrderHeaderResource, AdsOrderResource, RoomAdResource, FeaturesResource
+
+from api.api_resources.ads.ads_bundle_resource import AdsBundleResource
+from api.api_resources.ads.room_ad_resource import RoomAdResource
+from api.api_resources.aparment.apartment_resource import ApartmentResource
+from api.api_resources.banner.banner_resource import BannerResource
+from api.api_resources.fcm_resource import FCMDeviceResource
+from api.api_resources.notification_resource import NotificationResource
+from api.api_resources.order.order_detail_resource import OrderDetailResource
+from api.api_resources.order.order_header import OrderHeaderResource
+from api.api_resources.order.order_status_resource import OrderStatusResource
+from api.api_resources.order.type_selling import TypeSellingResource
+from api.api_resources.product.product_resource import ProductResource
+from api.api_resources.room.feature_resource import FeaturesResource
+from api.api_resources.room.room_detail_resource import RoomDetailResource
+from api.api_resources.room.room_images_resource import RoomImagesResource
+from api.api_resources.room.room_resource import RoomResource
+from api.api_resources.user_resource import UserResource
 
 v1_api = Api(api_name='v1')
 v1_api.register(OrderStatusResource())
+v1_api.register(ApartmentResource())
 v1_api.register(FCMDeviceResource())
 v1_api.register(UserResource())
 v1_api.register(OrderDetailResource())
 v1_api.register(OrderHeaderResource())
 v1_api.register(ProductResource())
-v1_api.register(AdsOrderResource())
 v1_api.register(NotificationResource())
 v1_api.register(RoomAdResource())
 v1_api.register(FeaturesResource())
@@ -40,11 +54,7 @@ v1_api.register(RoomImagesResource())
 v1_api.register(BannerResource())
 v1_api.register(AdsBundleResource())
 
-v2_api = routers.DefaultRouter()
-v2_api.register(r'users', views.UserViewSet)
-
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^api/', include(v1_api.urls)),
-    url(r'^api_v2/', include('rest_framework.urls', namespace='rest_framework'))
+    url(r'^api/', include(v1_api.urls))
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

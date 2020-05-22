@@ -5,7 +5,15 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 # Register your models here.
-from api.models import User, Room, AdsBundle, Feature, TypeSelling, AdsOrder, OrderHeader, OrderStatus, Apartment, Banner
+from api.models.ads.ad_bundle import AdsBundle
+from api.models.apartment.apartment import Apartment
+from api.models.banner.banner import Banner
+from api.models.order.order_header import OrderHeader
+from api.models.order.order_status import OrderStatus
+from api.models.order.type_selling import TypeSelling
+from api.models.room.room import Room
+from api.models.user.user import User
+
 
 class UserAdmin(BaseUserAdmin):
     fieldsets = (
@@ -34,26 +42,37 @@ class UserAdmin(BaseUserAdmin):
     ordering = ('email',)
     filter_horizontal = ('groups', 'user_permissions',)
 
+
 class TypeSellingAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
 
-class AdsBundleAdmin (admin.ModelAdmin):
-    list_display = ('ads_bundle_id', 'name', 'total_click', 'price', )
 
-class RoomAdmin (admin.ModelAdmin):
+class AdsBundleAdmin(admin.ModelAdmin):
+    list_display = ('ads_bundle_id', 'name', 'total_click', 'price',)
+
+
+class RoomAdmin(admin.ModelAdmin):
     list_display = ('room_id', 'name', 'description', 'contact_person_name', 'contact_person_phone', 'created_by')
 
-class OrderHeaderAdmin (admin.ModelAdmin):
-    list_display = ('midtrans_id', 'invoice_ref_number', 'grand_total', 'order_date', 'expired_date', 'payment_date', 'payment_type', 'payment_number', 'type_selling')
+
+class OrderHeaderAdmin(admin.ModelAdmin):
+    list_display = (
+        'midtrans_id', 'invoice_ref_number', 'grand_total', 'order_date', 'expired_date', 'payment_date',
+        'payment_type',
+        'payment_number', 'type_selling')
+
 
 class OrderStatusAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
 
+
 class ApartmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'location')
 
+
 class BannerAdmin(admin.ModelAdmin):
     list_display = ('active_at', 'expired_at', 'image')
+
 
 admin.site.register(User, UserAdmin)
 admin.site.register(Room, RoomAdmin)

@@ -34,7 +34,7 @@ MIDTRANS_PRODUCTION = 'https://app.midtrans.com/snap/v1/transactions'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 TASTYPIE_FULL_DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2', '0.0.0.0']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2', '0.0.0.0', '192.168.0.101']
 AUTH_USER_MODEL = "api.User"
 APPEND_SLASH=False
 # AUTHENTICATION_BACKENDS = ('api.backends.CustomBackend',)
@@ -57,7 +57,6 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'fcm_django',
     'tastypie',
-    'rest_framework',
     'api',
 ]
 
@@ -113,6 +112,14 @@ WSGI_APPLICATION = 'rent_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'sewano',
+        'USER': 'lukas_kris',
+        'PASSWORD': 'root',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    },
+    'network': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'd706svi8568s1q',
         'USER': 'saiclqucmgclmp',
         'PASSWORD': '12dd947a94ce5d178fb57cec11dcebb52cf083836b2fce6770815d259b81383a',
@@ -146,13 +153,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
+USE_TZ = True
 TIME_ZONE = 'Asia/Jakarta'
 
 USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
 SITE_ID = 2
 
 
@@ -161,7 +168,7 @@ SITE_ID = 2
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(PROJECT_ROOT, 'staticfiles')     # Used to get static resources from web server
+STATIC_ROOT = os.path.join(PROJECT_ROOT, 'staticfiles')     # Used to get static api_resources from web server
 
 # Extra places for collectstatic to find static files.
 STATICFILES_DIRS = (

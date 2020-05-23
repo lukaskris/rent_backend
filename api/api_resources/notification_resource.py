@@ -1,3 +1,5 @@
+import logging
+
 from django.conf.urls import url
 from django.http import JsonResponse
 from fcm_django.models import FCMDevice
@@ -7,6 +9,8 @@ from tastypie.resources import ModelResource
 # models
 from api.models.notification.notifiaction import Notification
 from api.models.order.order_header import OrderHeader
+
+logger = logging.getLogger('api.notification')
 
 
 class NotificationResource(ModelResource):
@@ -27,13 +31,13 @@ class NotificationResource(ModelResource):
 
     def handling(self, request):
         try:
-            print("NotificationResource.handling: masuk")
+            logger.info("NotificationResource.handling: masuk")
             data = self.deserialize(
                 request, request.body,
                 format=request.content_type
             )
 
-            print('NotificationResource.handling: Body {}'.format(data))
+            logger.info('NotificationResource.handling: Body {}'.format(data))
 
             midtrans_id = data.get("order_id", "")
             payment_type = data.get("payment_type", "")
@@ -78,23 +82,23 @@ class NotificationResource(ModelResource):
             order_header.payment_type = transaction_type
             order_header.order_status_id = order_status_id
             order_header.save()
-            print("Order header saved {}".format(order_header))
+            logger.info("Order header saved {}".format(order_header))
 
             Notification.objects.create(
                 user_id=order_header.user_id,
                 message=message_notification,
                 order_header_id=order_header.id
             )
-            print("Notification saved")
+            logger.info("Notification saved")
             device = FCMDevice.objects.get(user_id=order_header.user_id)
 
-            print("Device get {}".format(device))
-            print("Order header type selling {}".format(order_header.type_selling_id))
+            logger.info("Device get {}".format(device))
+            logger.info("Order header type selling {}".format(order_header.type_selling_id))
             message_data = {
                 "order_header_id": str(order_header.id),
                 "type": "Ad" if order_header.type_selling_id is None else "Room"
             }
-            print("Message data {}".format(message_data))
+            logger.info("Message data {}".format(message_data))
             device.send_message(title="Pembayaran", body=message_notification, data=message_data)
             return JsonResponse({
                 'success': {
@@ -102,7 +106,7 @@ class NotificationResource(ModelResource):
                 }
             }, content_type='application/json', status=200)
         except Exception as e:
-            print('roomResource.update onError: {}'.format(str(e)))
+            logger.exception('roomResource.update onError: {}'.format(str(e)))
             return JsonResponse({
                 'error': {
                     "message": str(e)

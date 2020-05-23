@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from django.conf.urls import url
 from django.db.models import Sum
@@ -11,14 +12,7 @@ from tastypie.utils import trailing_slash
 from api.models.ads.room_ad import RoomAd
 from api.api_resources.room.room_resource import RoomResource
 
-
-def get_count(request):
-    room = RoomAd.objects.all().filter(room_id=request.GET.get('room_id'), active=True,
-                                       expired_date__gte=datetime.date.today()).aggregate(Sum('click'))
-    print('roomResource.update: room {}'.format(room))
-    return JsonResponse({
-        'click': room["click__sum"]
-    }, content_type='application/json', status=200)
+logger = logging.getLogger('api.room_ad_resource')
 
 
 class RoomAdResource(ModelResource):
@@ -40,3 +34,12 @@ class RoomAdResource(ModelResource):
                 (resource_name, trailing_slash()),
                 self.wrap_view('get_count'), name="api_get_count")
         ]
+
+    @staticmethod
+    def get_count(request, **kwargs):
+        room = RoomAd.objects.all().filter(room_id=request.GET.get('room_id'), active=True,
+                                           expired_date__gte=datetime.date.today()).aggregate(Sum('click'))
+        logger.info('roomResource.update: room {}'.format(room))
+        return JsonResponse({
+            'click': room["click__sum"]
+        }, content_type='application/json', status=200)

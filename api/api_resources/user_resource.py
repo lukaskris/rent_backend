@@ -53,7 +53,7 @@ class UserResource(ModelResource):
                 name='api_recover_password'),
         ]
 
-    def authenticated(self, request):
+    def authenticated(self, request, **kwargs):
         """ api method to check whether a user is authenticated or not"""
 
         self.method_check(request, allowed=['get'])
@@ -68,7 +68,7 @@ class UserResource(ModelResource):
         else:
             return self.create_response(request, False)
 
-    def recover_password(self, request):
+    def recover_password(self, request, **kwargs):
         """ Sets a token to recover the password and sends an email with
         the token
 
@@ -92,7 +92,7 @@ class UserResource(ModelResource):
 
         return self.create_response(request, {'success': True})
 
-    def login(self, request):
+    def login(self, request, **kwargs):
         """ A new end point for login the user using the django login system
 
         """
@@ -171,8 +171,8 @@ class UserResource(ModelResource):
 
         return self.create_response(request, {'success': True})
 
-    def register(self, request):
-        logger.debug('UserResource.register')
+    def register(self, request, **kwargs):
+        logger.info('UserResource.register')
         data = self.deserialize(
             request, request.body,
             format=request.content_type

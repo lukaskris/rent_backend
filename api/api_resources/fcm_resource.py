@@ -26,8 +26,8 @@ class FCMDeviceResource(ModelResource):
                 self.wrap_view('register'), name="api_fcm_register"),
         ]
 
-    def register(self, request):
-        logger.debug('FCMDeviceResource.register')
+    def register(self, request, **kwargs):
+        logger.info('FCMDeviceResource.register')
         data = self.deserialize(
             request, request.body,
             format=request.content_type
@@ -37,10 +37,10 @@ class FCMDeviceResource(ModelResource):
         userId = data['user_id']
         name = data['name']
         data_type = data['type']
-        print('FCMDeviceResource.register: {}'.format(json.dumps(data)))
+        logger.info('FCMDeviceResource.register: {}'.format(json.dumps(data)))
         try:
             device = FCMDevice.objects.get(device_id=deviceId)
-            print(device)
+            logger.info(device)
             device.registration_id = registrationId
             device.user_id = userId
             device.type = data_type
@@ -62,7 +62,7 @@ class FCMDeviceResource(ModelResource):
                 'message': 'success'
             }, content_type='application/json', status=200)
         except Exception as e:
-            print(e)
+            logger.exception(e)
             return JsonResponse({
                 'message': str(e)
             }, content_type='application/json', status=500)

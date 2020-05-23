@@ -31,8 +31,6 @@ class OrderHeaderResource(ModelResource):
         queryset = OrderHeader.objects.exclude(
             Q(payment_type__isnull=True) | Q(order_status_id=3) | Q(order_status_id=1) & Q(
                 expired_date__lte=datetime.date.today()))
-
-        print(queryset.query)
         resource_name = 'order'
         filtering = {
             'user_id': ALL,
@@ -52,9 +50,9 @@ class OrderHeaderResource(ModelResource):
                 self.wrap_view('charge'), name="api_charge"),
         ]
 
-    def charge(self, request):
+    def charge(self, request, **kwargs):
         try:
-            logger.debug('OrderHeaderResource.payment')
+            logger.info('OrderHeaderResource.payment')
             data = self.deserialize(
                 request, request.body,
                 format=request.content_type

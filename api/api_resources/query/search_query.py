@@ -1,10 +1,10 @@
 import enum
 
 
-class TypeBooking(enum.Enum):
-    DAY = 1
-    MONTH = 2
-    YEAR = 3
+class SortType(enum.Enum):
+    RECOMMENDED = 1
+    LOW_PRICE = 2
+    HIGH_PRICE = 3
 
 
 class SearchQuery:
@@ -73,9 +73,9 @@ class SearchQuery:
 
     @classmethod
     def ads_query(cls, type_booking, check_in, check_out, offset, filter_by, order_by):
-        if order_by == TypeBooking.DAY:
+        if order_by == SortType.RECOMMENDED:
             query_order_by = "order_headers.count"
-        elif order_by == TypeBooking.MONTH:
+        elif order_by == SortType.LOW_PRICE:
             query_order_by = "room_detail_view.price"
         else:
             query_order_by = "room_detail_view.price desc"
@@ -90,9 +90,9 @@ class SearchQuery:
 
     @classmethod
     def non_ads_query(cls, type_booking, check_in, check_out, offset, filter_by, order_by):
-        if order_by == TypeBooking.DAY:
+        if order_by == SortType.RECOMMENDED:
             query_order_by = "order_headers.count"
-        elif order_by == TypeBooking.MONTH:
+        elif order_by == SortType.LOW_PRICE:
             query_order_by = "room_detail_view.price"
         else:
             query_order_by = "room_detail_view.price desc"

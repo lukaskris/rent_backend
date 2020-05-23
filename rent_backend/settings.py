@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'fcm_django',
     'tastypie',
-    'api',
+    'api.app.ApiConfig',
 ]
 
 FCM_DJANGO_SETTINGS = {

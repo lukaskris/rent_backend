@@ -5,26 +5,27 @@ import logging
 from django.conf.urls import url
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
-from tastypie import http
+from tastypie import http, fields
+from tastypie.authorization import Authorization
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.resources import ModelResource
 from tastypie.utils import trailing_slash
 
+from api.api_resources.helper.multipart_request import MultipartResource
 from api.models.user.user import User
 
 logger = logging.getLogger('api.user')
 
 
-class UserResource(ModelResource):
-    """Get and update user profile."""
-
+class UserResource(MultipartResource, ModelResource):
     class Meta:
         """ Metadata for the user resource """
         queryset = User.objects.all()
         resource_name = 'users'
-        allowed_methods = ['get', 'post']
+        allowed_methods = ['get', 'post', 'put']
         always_return_data = True
         excludes = ('password', 'is_superuser', 'is_active', 'date_joined')
+        authorization = Authorization()
 
     def prepend_urls(self):
         """ Add the following array of urls to the UserResource base urls """

@@ -39,8 +39,9 @@ def get_recommendation(self, request, **kwargs):
         if len(ids) < 5:
             diff = 5 - len(ids)
             logger.info("DIFF: {}".format(diff))
-            for id in Room.objects.all().exclude(product_id__in=ids).order_by('room_id').values_list('product_id',
-                                                                                                     flat=True)[
+            for id in Room.objects.all().exclude(product_id__in=ids).order_by('room_id').values_list(
+                    'product_id',
+                    flat=True)[
                       :diff]:
                 ids.append(id)
             logger.info(ids)
@@ -50,8 +51,10 @@ def get_recommendation(self, request, **kwargs):
 
         list_response = []
         for room in query:
-            query_room_detail = RoomDetail.objects.filter(room_id=room.room_id).values('id', 'room', 'price',
-                                                                                       'type_selling')
+            query_room_detail = RoomDetail.objects.filter(room_id=room.room_id).exclude(type_selling_id=4).values('id',
+                                                                                                                  'room',
+                                                                                                                  'price',
+                                                                                                                  'type_selling')[:2]
             for roomDetail in query_room_detail:
                 typeSelling = TypeSelling.objects.filter(id=roomDetail["type_selling"]).values('id', 'name')
                 typeSellingSerialized = json.dumps(list(typeSelling), cls=DjangoJSONEncoder)
@@ -66,6 +69,9 @@ def get_recommendation(self, request, **kwargs):
             serializedQuery = json.dumps(list(queryImages), cls=DjangoJSONEncoder)
 
             images = json.loads(serializedQuery)
+            ads = False
+            if room.room_id in valid_ads_list:
+                ads = True
             list_response.append({
                 'product_id': room.product_id,
                 'room_id': room.room_id,
@@ -81,6 +87,7 @@ def get_recommendation(self, request, **kwargs):
                 'bedroom_total': room.bedroom_total,
                 'bathroom_total': room.bathroom_total,
                 'guest_maximum': room.guest_maximum,
+                'ads': ads
             })
             # logger.info(list_response)
 

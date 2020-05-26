@@ -37,7 +37,7 @@ def search(self, request):
         sort = request.GET.get('sort', '1')
         filter = int(request.GET.get('filter', 0))
         offset = int(request.GET.get('offset', 0))
-        type_selling = request.GET.get('type_selling_id', '1')
+        type_selling = int(request.GET.get('type_selling_id', 1))
         check_in = request.GET.get('check_in')
         check_out = request.GET.get('check_out')
 

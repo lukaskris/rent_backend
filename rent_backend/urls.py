@@ -13,11 +13,11 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
+from django.conf import settings
 from django.conf.urls import url, include
+from django.conf.urls.static import static
 from django.contrib import admin
 from tastypie.api import Api
-from django.conf import settings
-from django.conf.urls.static import static
 
 from api.api_resources.ads.ads_bundle_resource import AdsBundleResource
 from api.api_resources.ads.room_ad_resource import RoomAdResource
@@ -57,4 +57,5 @@ v1_api.register(AdsBundleResource())
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include(v1_api.urls))
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

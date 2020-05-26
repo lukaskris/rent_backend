@@ -4,6 +4,8 @@ from django.utils import timezone
 
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 
+from api.helper.path_and_rename import PathAndRename
+
 
 class UserManager(BaseUserManager):
     def _create_user(self, email, password, is_staff, is_superuser, **extra_fields):
@@ -42,7 +44,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     last_login = models.DateTimeField(null=True, blank=True)
     date_joined = models.DateTimeField(auto_now_add=True)
-    image_url = models.FileField(blank=False, null=False, upload_to='images/employees/', default='')
+    image_url = models.FileField(upload_to=PathAndRename("images/users/"), verbose_name='Room')
 
     USERNAME_FIELD = 'email'
     EMAIL_FIELD = 'email'

@@ -177,8 +177,11 @@ STATICFILES_DIRS = (
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = '/media/'                # Used to include media items in web pages
-MEDIA_ROOT = './'       # Used to get media items from web server
+# Used to get media items from web server
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media').replace('\\', '/')
+
+# Used to include media items in web pages
+MEDIA_URL = '/media/'
 
 LOGGING = {
     'version': 1,

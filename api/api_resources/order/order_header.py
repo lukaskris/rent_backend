@@ -28,9 +28,7 @@ class OrderHeaderResource(ModelResource):
     product = fields.ToOneField(ProductResource, attribute='product', full=True, null=True)
 
     class Meta:
-        queryset = OrderHeader.objects.exclude(
-            Q(payment_type__isnull=True) | Q(order_status_id=3) | Q(order_status_id=1) & Q(
-                expired_date__lte=datetime.date.today()))
+        queryset = OrderHeader.objects.all()
         resource_name = 'order'
         filtering = {
             'user_id': ALL,

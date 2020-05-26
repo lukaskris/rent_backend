@@ -18,9 +18,8 @@ class SearchQuery:
                 WHERE
                     api_orderheader.active = TRUE AND 
                     (api_orderheader.payment_type IS NOT NULL OR api_orderheader.payment_type != '') AND
-                    api_orderheader.order_status_id != 3 AND
-                    api_orderheader.check_in_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy') OR
-                    api_orderheader.check_out_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy')
+                    api_orderheader.order_status_id != 3 
+                    {check_in_check_out}
                 GROUP BY 
                     product_id
         )
@@ -85,7 +84,15 @@ class SearchQuery:
         else:
             filter_apartment = ''
 
-        return cls.query.format(check_in=check_in, check_out=check_out, offset=offset, type_booking=type_booking,
+        if check_in is None or check_out is None:
+            check_in_check_out = ''
+        else:
+            check_in_check_out = """
+            AND api_orderheader.check_in_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy') OR
+                    api_orderheader.check_out_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy')
+            """.format(check_in=check_in, check_out=check_out)
+
+        return cls.query.format(check_in_check_out=check_in_check_out, offset=offset, type_booking=type_booking,
                                 order_by=query_order_by, ads_non_ads='IN', ads_field='TRUE AS ADS', filter_apartment=filter_apartment)
 
     @classmethod
@@ -102,5 +109,13 @@ class SearchQuery:
         else:
             filter_apartment = ''
 
-        return cls.query.format(check_in=check_in, check_out=check_out, offset=offset, type_booking=type_booking,
+        if check_in is None or check_out is None:
+            check_in_check_out = ''
+        else:
+            check_in_check_out = """
+            AND api_orderheader.check_in_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy') OR
+                    api_orderheader.check_out_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy')
+            """.format(check_in=check_in, check_out=check_out)
+
+        return cls.query.format(check_in_check_out=check_in_check_out, offset=offset, type_booking=type_booking,
                                 order_by=query_order_by, ads_non_ads="NOT IN", ads_field='FALSE AS ADS', filter_apartment=filter_apartment)

@@ -57,3 +57,6 @@ class OrderHeader(models.Model):
     check_in_time = models.DateTimeField()
     check_out_time = models.DateTimeField()
     active = models.BooleanField(default=True)
+
+    def __unicode__(self):
+        return self.invoice_ref_number

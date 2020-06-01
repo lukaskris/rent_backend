@@ -13,3 +13,6 @@ class Product(models.Model):
     status = models.BooleanField(default=True)  # 0 1 active or not
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True)
+
+    def __unicode__(self):
+        return self.name

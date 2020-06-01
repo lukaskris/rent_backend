@@ -9,8 +9,6 @@ from api.models.ads.ad_bundle import AdsBundle
 from api.models.apartment.apartment import Apartment
 from api.models.banner.banner import Banner
 from api.models.order.order_header import OrderHeader
-from api.models.order.order_status import OrderStatus
-from api.models.order.type_selling import TypeSelling
 from api.models.room.room import Room
 from api.models.user.user import User
 
@@ -42,17 +40,23 @@ class UserAdmin(BaseUserAdmin):
     ordering = ('email',)
     filter_horizontal = ('groups', 'user_permissions',)
 
+    def has_delete_permission(self, request, obj=None):
+        return False
 
-class TypeSellingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
 
 
 class AdsBundleAdmin(admin.ModelAdmin):
     list_display = ('ads_bundle_id', 'name', 'total_click', 'price',)
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 class RoomAdmin(admin.ModelAdmin):
     list_display = ('room_id', 'name', 'description', 'contact_person_name', 'contact_person_phone', 'created_by')
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class OrderHeaderAdmin(admin.ModelAdmin):
@@ -61,23 +65,32 @@ class OrderHeaderAdmin(admin.ModelAdmin):
         'payment_type',
         'payment_number', 'type_selling')
 
+    def has_add_permission(self, request, obj=None):
+        return False
 
-class OrderStatusAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class ApartmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'location')
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 class BannerAdmin(admin.ModelAdmin):
     list_display = ('active_at', 'expired_at', 'image')
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 admin.site.register(User, UserAdmin)
 admin.site.register(Room, RoomAdmin)
-admin.site.register(OrderStatus, OrderStatusAdmin)
-admin.site.register(TypeSelling, TypeSellingAdmin)
 admin.site.register(AdsBundle, AdsBundleAdmin)
 admin.site.register(OrderHeader, OrderHeaderAdmin)
 admin.site.register(Apartment, ApartmentAdmin)

@@ -18,7 +18,8 @@ class SearchQuery:
                 WHERE
                     api_orderheader.active = TRUE AND 
                     (api_orderheader.payment_type IS NOT NULL OR api_orderheader.payment_type != '') AND
-                    api_orderheader.order_status_id != 3 
+                    api_orderheader.order_status_id != 3 AND
+                    api_orderheader.type_selling_id IS NOT NULL
                     {check_in_check_out}
                 GROUP BY 
                     product_id
@@ -88,8 +89,8 @@ class SearchQuery:
             check_in_check_out = ''
         else:
             check_in_check_out = """
-            AND api_orderheader.check_in_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy') OR
-                    api_orderheader.check_out_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy')
+            (AND api_orderheader.check_in_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy') OR
+                    api_orderheader.check_out_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy'))
             """.format(check_in=check_in, check_out=check_out)
 
         return cls.query.format(check_in_check_out=check_in_check_out, offset=offset, type_booking=type_booking,
@@ -113,8 +114,8 @@ class SearchQuery:
             check_in_check_out = ''
         else:
             check_in_check_out = """
-            AND api_orderheader.check_in_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy') OR
-                    api_orderheader.check_out_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy')
+            (AND api_orderheader.check_in_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy') OR
+                    api_orderheader.check_out_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy'))
             """.format(check_in=check_in, check_out=check_out)
 
         return cls.query.format(check_in_check_out=check_in_check_out, offset=offset, type_booking=type_booking,

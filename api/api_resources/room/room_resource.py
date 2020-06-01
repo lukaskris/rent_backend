@@ -17,6 +17,7 @@ from api.models.room.room import Room
 from api.models.room.room_detail import RoomDetail
 from api.models.room.room_image import RoomImages
 from .recommendation_resource import get_recommendation
+from .room_detail_resource import RoomDetailResource
 from .room_images_resource import RoomImagesResource
 from .search_resource import search
 from ..aparment.apartment_resource import ApartmentResource
@@ -26,7 +27,7 @@ logger = logging.getLogger('api.room_resource')
 
 class RoomResource(ModelResource):
     created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
-    room_details = fields.ToManyField('api.api_resources.room.room_detail_resource.RoomDetailResource', 'room_detail', related_name='room', full=True, null=True)
+    room_details = fields.ToManyField(RoomDetailResource, 'room_detail', full=True, null=True)
     images = fields.ToManyField(RoomImagesResource, 'room_images', full=True, null=True)
     apartment = fields.ToOneField(ApartmentResource, 'apartment', full=True, null=True, )
 

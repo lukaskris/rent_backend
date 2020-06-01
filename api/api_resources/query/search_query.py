@@ -89,7 +89,7 @@ class SearchQuery:
             check_in_check_out = ''
         else:
             check_in_check_out = """
-            (AND api_orderheader.check_in_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy') OR
+            AND (api_orderheader.check_in_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy') OR
                     api_orderheader.check_out_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy'))
             """.format(check_in=check_in, check_out=check_out)
 
@@ -114,7 +114,7 @@ class SearchQuery:
             check_in_check_out = ''
         else:
             check_in_check_out = """
-            (AND api_orderheader.check_in_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy') OR
+            AND (api_orderheader.check_in_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy') OR
                     api_orderheader.check_out_time NOT BETWEEN to_date('{check_in}','ddMMyyyy') and to_date('{check_out}','ddMMyyyy'))
             """.format(check_in=check_in, check_out=check_out)
 

@@ -8,3 +8,6 @@ from django.db import models
 # 4.
 class OrderStatus(models.Model):
     name = models.TextField()
+
+    def __unicode__(self):
+        return self.name

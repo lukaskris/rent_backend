@@ -5,3 +5,6 @@ from django.db import models
 # 1 sewa harian, 2 sewa mingguan ..., 5 jual
 class TypeSelling(models.Model):
     name = models.TextField()
+
+    def __unicode__(self):
+        return self.name

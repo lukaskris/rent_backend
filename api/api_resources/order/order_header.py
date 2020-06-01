@@ -17,6 +17,7 @@ from tastypie.resources import ModelResource, ALL_WITH_RELATIONS
 from api.api_resources.order.order_status_resource import OrderStatusResource
 from api.api_resources.order.type_selling import TypeSellingResource
 from api.api_resources.product.product_resource import ProductResource
+from api.api_resources.user_resource import UserResource
 from api.models.order.order_header import OrderHeader
 
 logger = logging.getLogger('api.order_header')
@@ -26,12 +27,14 @@ class OrderHeaderResource(ModelResource):
     type_selling = fields.ToOneField(TypeSellingResource, attribute='type_selling', full=True, null=True)
     order_status = fields.ToOneField(OrderStatusResource, attribute='order_status', full=True, null=True)
     product = fields.ToOneField(ProductResource, attribute='product', full=True, null=True)
+    user = fields.ToOneField(UserResource, attribute='user', full=True, null=True)
 
     class Meta:
         queryset = OrderHeader.objects.all()
         resource_name = 'order'
+        ordering = ['order_date', 'order_status']
         filtering = {
-            'user_id': ALL,
+            'user': ALL_WITH_RELATIONS,
             'id': ['exact'],
             'product': ALL_WITH_RELATIONS,
             'check_in_time': ALL,

@@ -1,25 +1,19 @@
 import datetime
-import json
 import logging
 
 from django.conf.urls import url
-from django.core import serializers
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Sum
 from django.http import JsonResponse
-from tastypie import fields
 from tastypie.authorization import Authorization
 from tastypie.resources import ModelResource
 from tastypie.utils import trailing_slash
 
 from api.models.ads.room_ad import RoomAd
-from api.api_resources.room.room_resource import RoomResource
 
 logger = logging.getLogger('api.room_ad_resource')
 
 
 class RoomAdResource(ModelResource):
-    room = fields.ToOneField(RoomResource, 'room')
 
     class Meta:
         queryset = RoomAd.objects.all()

@@ -7,6 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from tastypie import http, fields
 from tastypie.authorization import Authorization
+from tastypie.constants import ALL
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.resources import ModelResource
 from tastypie.utils import trailing_slash
@@ -24,7 +25,12 @@ class UserResource(MultipartResource, ModelResource):
         resource_name = 'users'
         allowed_methods = ['get', 'post', 'put']
         always_return_data = True
-        excludes = ('password', 'is_superuser', 'is_active', 'date_joined')
+        excludes = ('password', 'is_active', 'date_joined')
+        filtering = {
+            'id': ALL,
+            'is_staff': ALL,
+            'is_superuser': ALL
+        }
         authorization = Authorization()
 
     def prepend_urls(self):
@@ -126,6 +132,7 @@ class UserResource(MultipartResource, ModelResource):
                                     'email': email,
                                     'password': password,
                                     'name': userData.name,
+                                    'is_superuser': userData.is_superuser,
                                     'is_staff': int(userData.is_staff == True),
                                     'phone_number': str(userData.phone_number),
                                     'image_url': str(userData.image_url)
@@ -162,15 +169,22 @@ class UserResource(MultipartResource, ModelResource):
                 }
             }, content_type='application/json', status=500)
 
-    def logout(self, request):
+    def logout(self, request, **kwargs):
         """
         A new end point to logout the user using the django login system
         """
         self.method_check(request, allowed=['delete'])
-        if request.user and request.user.is_authenticated():
+        try:
             logout(request)
+            return JsonResponse({
+                'success': True
+            }, content_type='application/json', status=200)
+        except:
+            return JsonResponse({
+                'objects': {},
+                'error': True
+            }, content_type='application/json', status=400)
 
-        return self.create_response(request, {'success': True})
 
     def register(self, request, **kwargs):
         logger.info('UserResource.register')
@@ -197,7 +211,9 @@ class UserResource(MultipartResource, ModelResource):
         except User.DoesNotExist:
             # the user with this email does not exist
             try:
-                User.objects.get(phone_number=data['phone_number'])
+                nano = User.objects.filter(phone_number=data['phone_number']).first()
+                if nano is None:
+                    raise User.DoesNotExist
                 return JsonResponse({
                     'objects': [],
                     'error': {
@@ -226,6 +242,7 @@ class UserResource(MultipartResource, ModelResource):
                             'email': email,
                             'password': password,
                             'name': user.name,
+                            'is_superuser': user.is_superuser,
                             'is_staff': int(user.is_staff == True),
                             'phone_number': str(user.phone_number),
                             'image_url': str(user.image_url)

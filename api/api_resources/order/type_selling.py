@@ -6,7 +6,7 @@ from api.models.order.type_selling import TypeSelling
 
 
 class TypeSellingResource(ModelResource):
-    room_detail = fields.ToManyField('api.api_resources.RoomDetailResource', 'room_detail_set', related_name='type_selling',
+    room_detail = fields.ToManyField('api.api_resources.room.room_detail_resource.RoomDetailResource', 'room_detail_set', related_name='type_selling',
                                      null=True)
 
     class Meta:

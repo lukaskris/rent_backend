@@ -6,7 +6,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from tastypie import fields
 from tastypie.authorization import Authorization
-from tastypie.constants import ALL
+from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.resources import ModelResource
 from tastypie.utils import trailing_slash
 
@@ -17,24 +17,28 @@ from api.models.room.room import Room
 from api.models.room.room_detail import RoomDetail
 from api.models.room.room_image import RoomImages
 from .recommendation_resource import get_recommendation
+from .room_images_resource import RoomImagesResource
 from .search_resource import search
+from ..aparment.apartment_resource import ApartmentResource
 
 logger = logging.getLogger('api.room_resource')
 
 
 class RoomResource(ModelResource):
     created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
-    room_details = fields.ToManyField('api.api_resources.RoomDetailResource', 'room_detail', full=True, null=True)
-    images = fields.ToManyField('api.api_resources.RoomImagesResource', 'room_images', full=True, null=True)
+    room_details = fields.ToManyField('api.api_resources.room.room_detail_resource.RoomDetailResource', 'room_detail', related_name='room', full=True, null=True)
+    images = fields.ToManyField(RoomImagesResource, 'room_images', full=True, null=True)
+    apartment = fields.ToOneField(ApartmentResource, 'apartment', full=True, null=True, )
 
     class Meta:
-        queryset = Room.objects.all()
+        queryset = Room.objects.filter(status=True)
         resource_name = 'room'
         allowed_methods = ['get', 'post', 'put', 'delete']
         always_return_data = True
         authorization = Authorization()  # THIS IS IMPORTANT
         filtering = {
             'room_id': ALL,
+            'created_by': ALL_WITH_RELATIONS
         }
 
     def prepend_urls(self):
@@ -86,10 +90,13 @@ class RoomResource(ModelResource):
             bedroomTotal = data.get('bedroom', 1)
             bathroomTotal = data.get('bathroom', 1)
             guestMaximum = data.get('guest_maximum', 1)
+            apartment_id = data.get('apartment_id', 0)
+            apartment_name = data.get('apartment_name', '')
 
             logger.info("RoomResource.update: {}".format(roomId))
             logger.info("RoomResource.update: {}".format("prepare update"))
-            Room.objects.filter(pk=roomId).update(
+            room = Room.objects.filter(pk=roomId)
+            room.update(
                 name=name,
                 description=description,
                 contact_person_name=contactPersonName,
@@ -97,7 +104,8 @@ class RoomResource(ModelResource):
                 sqm_room=sqmRoom,
                 bedroom_total=bedroomTotal,
                 bathroom_total=bathroomTotal,
-                guest_maximum=guestMaximum
+                guest_maximum=guestMaximum,
+                apartment_id=apartment_id
             )
 
             for roomDetail in roomDetails:
@@ -156,7 +164,9 @@ class RoomResource(ModelResource):
                 'sqm_room': sqmRoom,
                 'bedroom_total': bedroomTotal,
                 'bathroom_total': bathroomTotal,
-                'guest_maximum': guestMaximum
+                'guest_maximum': guestMaximum,
+                'apartment_id': apartment_id,
+                'apartment_name': apartment_name,
             }
             logger.info(response)
             return JsonResponse(response, content_type='application/json', status=200)

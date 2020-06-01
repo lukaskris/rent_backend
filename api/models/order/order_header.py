@@ -6,7 +6,6 @@ from django.utils import timezone
 from api.models.order.order_status import OrderStatus
 from api.models.order.type_selling import TypeSelling
 
-
 # Payments header
 from api.models.room.product import Product
 from api.models.user.user import User
@@ -58,5 +57,5 @@ class OrderHeader(models.Model):
     check_out_time = models.DateTimeField()
     active = models.BooleanField(default=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.invoice_ref_number

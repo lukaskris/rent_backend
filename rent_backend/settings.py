@@ -110,7 +110,7 @@ WSGI_APPLICATION = 'rent_backend.wsgi.application'
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
 DATABASES = {
-    'default': {
+    'local': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'sewano',
         'USER': 'lukas_kris',
@@ -118,12 +118,12 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '5432',
     },
-    'network': {
+    'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'd706svi8568s1q',
-        'USER': 'saiclqucmgclmp',
-        'PASSWORD': '12dd947a94ce5d178fb57cec11dcebb52cf083836b2fce6770815d259b81383a',
-        'HOST': 'ec2-3-222-150-253.compute-1.amazonaws.com',
+        'NAME': 'da4em8flcek9ul',
+        'USER': 'wmeaxkobllqoto',
+        'PASSWORD': '1c813382df02bc2d2b0be9a6993287dea818bcce23f8079a476f3134348dbe2a',
+        'HOST': 'ec2-52-7-39-178.compute-1.amazonaws.com',
         'PORT': '5432',
     }
 }

@@ -29,7 +29,7 @@ class NotificationResource(ModelResource):
                 self.wrap_view('handling'), name="api_handling")
         ]
 
-    def handling(self, request):
+    def handling(self, request, **kwargs):
         try:
             logger.info("NotificationResource.handling: masuk")
             data = self.deserialize(

@@ -96,9 +96,11 @@ class OrderHeaderResource(ModelResource):
                 print(response.json())
                 if response.status_code == 201:
                     order_header.save()
-                    return JsonResponse({
-                        response.content
-                    }, content_type='application/json', status=response.status_code)
+                return HttpResponse(
+                    content=response.content,
+                    status=response.status_code,
+                    content_type=response.headers['Content-Type']
+                )
             else:
                 order_header = OrderHeader.objects.create(
                     midtrans_id=data["transaction_details"]["order_id"],
@@ -117,12 +119,12 @@ class OrderHeaderResource(ModelResource):
                 print(response.json())
                 if response.status_code == 201:
                     order_header.save()
+                return HttpResponse(
+                    content=response.content,
+                    status=response.status_code,
+                    content_type=response.headers['Content-Type']
+                )
 
-                return JsonResponse({
-                    'error': {
-                        "message": response.content
-                    }
-                }, content_type='application/json', status=response.status_code)
 
         except Exception as e:
             print("Exception: {}".format(e))

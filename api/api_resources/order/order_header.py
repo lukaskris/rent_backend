@@ -8,7 +8,7 @@ import requests
 from django.conf import settings
 from django.conf.urls import url
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from tastypie import fields
 from tastypie.constants import ALL
 from tastypie.resources import ModelResource, ALL_WITH_RELATIONS
@@ -96,11 +96,9 @@ class OrderHeaderResource(ModelResource):
                 print(response.json())
                 if response.status_code == 201:
                     order_header.save()
-                return HttpResponse(
-                    content=response.content,
-                    status=response.status_code,
-                    content_type=response.headers['Content-Type']
-                )
+                    return JsonResponse({
+                        response.content
+                    }, content_type='application/json', status=response.status_code)
             else:
                 order_header = OrderHeader.objects.create(
                     midtrans_id=data["transaction_details"]["order_id"],
@@ -119,21 +117,18 @@ class OrderHeaderResource(ModelResource):
                 print(response.json())
                 if response.status_code == 201:
                     order_header.save()
-                return HttpResponse(
-                    content=response.content,
-                    status=response.status_code,
-                    content_type=response.headers['Content-Type']
-                )
 
+                return JsonResponse({
+                    'error': {
+                        "message": response.content
+                    }
+                }, content_type='application/json', status=response.status_code)
 
         except Exception as e:
             print("Exception: {}".format(e))
-            return HttpResponse(
-                content={
-                    'error': {
-                        "message": e
-                    }
-                },
-                status=500,
-                content_type="application/json"
-            )
+            return JsonResponse({
+                'error': {
+                    "message": str(e)
+                }
+            }, content_type='application/json', status=500)
+

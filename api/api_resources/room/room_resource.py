@@ -3,6 +3,7 @@ import logging
 
 from django.conf.urls import url
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import transaction
 from django.http import JsonResponse
 from tastypie import fields
 from tastypie.authorization import Authorization
@@ -71,106 +72,107 @@ class RoomResource(ModelResource):
         # function for update products
         try:
             from django.http.multipartparser import MultiPartParser
-            logger.info("RoomResource.update: masuk")
-            data = self.deserialize(
-                request, request.body,
-                format=request.content_type
-            )
+            with transaction.atomic():
+                logger.info("RoomResource.update: masuk")
+                data = self.deserialize(
+                    request, request.body,
+                    format=request.content_type
+                )
 
-            logger.info('roomResource.update: Body {}'.format(data))
+                logger.info('roomResource.update: Body {}'.format(data))
 
-            roomId = data.get('room_id', "")
-            productId = data.get('product_id', "")
-            name = data.get('name', '')
-            description = data.get('description', '')
-            contactPersonName = data.get('contact_person_name', '')
-            contactPersonPhone = data.get('contact_person_phone', '')
-            roomDetails = data.get('room_details', [])
-            roomImages = data.get('room_images', [])
-            sqmRoom = data.get('sqm_room', 1)
-            bedroomTotal = data.get('bedroom', 1)
-            bathroomTotal = data.get('bathroom', 1)
-            guestMaximum = data.get('guest_maximum', 1)
-            apartment_id = data.get('apartment_id', 0)
-            apartment_name = data.get('apartment_name', '')
+                roomId = data.get('room_id', "")
+                productId = data.get('product_id', "")
+                name = data.get('name', '')
+                description = data.get('description', '')
+                contactPersonName = data.get('contact_person_name', '')
+                contactPersonPhone = data.get('contact_person_phone', '')
+                roomDetails = data.get('room_details', [])
+                roomImages = data.get('room_images', [])
+                sqmRoom = data.get('sqm_room', 1)
+                bedroomTotal = data.get('bedroom', 1)
+                bathroomTotal = data.get('bathroom', 1)
+                guestMaximum = data.get('guest_maximum', 1)
+                apartment_id = data.get('apartment_id', 0)
+                apartment_name = data.get('apartment_name', '')
 
-            logger.info("RoomResource.update: {}".format(roomId))
-            logger.info("RoomResource.update: {}".format("prepare update"))
-            room = Room.objects.filter(pk=roomId)
-            room.update(
-                name=name,
-                description=description,
-                contact_person_name=contactPersonName,
-                contact_person_phone=contactPersonPhone,
-                sqm_room=sqmRoom,
-                bedroom_total=bedroomTotal,
-                bathroom_total=bathroomTotal,
-                guest_maximum=guestMaximum,
-                apartment_id=apartment_id
-            )
+                logger.info("RoomResource.update: {}".format(roomId))
+                logger.info("RoomResource.update: {}".format("prepare update"))
+                room = Room.objects.filter(pk=roomId)
+                room.update(
+                    name=name,
+                    description=description,
+                    contact_person_name=contactPersonName,
+                    contact_person_phone=contactPersonPhone,
+                    sqm_room=sqmRoom,
+                    bedroom_total=bedroomTotal,
+                    bathroom_total=bathroomTotal,
+                    guest_maximum=guestMaximum,
+                    apartment_id=apartment_id
+                )
 
-            for roomDetail in roomDetails:
-                price = roomDetail.get("price", '')
-                type_selling_id = roomDetail.get("type_selling_id")
-                logger.info("Loop room detail: {}".format(roomDetail))
-                try:
-                    pd = RoomDetail.objects.get(room_id=roomId, type_selling_id=type_selling_id)
-                    pd.price = price
-                    pd.save()
-                    logger.info("Update room detail: ")
-                    logger.info(roomDetail)
-                except RoomDetail.DoesNotExist:
-                    pd = RoomDetail.objects.create(
-                        price=price,
-                        type_selling_id=type_selling_id,
-                        room_id=roomId
-                    )
-                    pd.save()
-                    logger.info("Create room detail: ")
-                    logger.info(roomDetail)
-            roomDetailIds = list(map(lambda x: x.get("type_selling_id"), roomDetails))
-            deletedRoomDetails = RoomDetail.objects.filter(room_id=roomId).exclude(type_selling_id__in=roomDetailIds)
-            logger.info(deletedRoomDetails)
-            for roomDetail in deletedRoomDetails:
-                roomDetail.delete()
+                for roomDetail in roomDetails:
+                    price = roomDetail.get("price", '')
+                    type_selling_id = roomDetail.get("type_selling_id")
+                    logger.info("Loop room detail: {}".format(roomDetail))
+                    try:
+                        pd = RoomDetail.objects.get(room_id=roomId, type_selling_id=type_selling_id)
+                        pd.price = price
+                        pd.save()
+                        logger.info("Update room detail: ")
+                        logger.info(roomDetail)
+                    except RoomDetail.DoesNotExist:
+                        pd = RoomDetail.objects.create(
+                            price=price,
+                            type_selling_id=type_selling_id,
+                            room_id=roomId
+                        )
+                        pd.save()
+                        logger.info("Create room detail: ")
+                        logger.info(roomDetail)
+                roomDetailIds = list(map(lambda x: x.get("type_selling_id"), roomDetails))
+                deletedRoomDetails = RoomDetail.objects.filter(room_id=roomId).exclude(type_selling_id__in=roomDetailIds)
+                logger.info(deletedRoomDetails)
+                for roomDetail in deletedRoomDetails:
+                    roomDetail.delete()
 
-            for roomImage in roomImages:
-                id = roomImage.get('id', -1)
-                RoomDetail.objects.filter(pk=id).delete()
+                for roomImage in roomImages:
+                    id = roomImage.get('id', -1)
+                    RoomDetail.objects.filter(pk=id).delete()
 
-            query_room_detail = RoomDetail.objects.filter(room_id=roomId).values('id', 'room', 'price', 'type_selling')
-            for roomDetail in query_room_detail:
-                typeSelling = TypeSelling.objects.filter(id=roomDetail["type_selling"]).values('id', 'name')
-                typeSellingSerialized = json.dumps(list(typeSelling), cls=DjangoJSONEncoder)
-                roomDetail["type_selling"] = json.loads(typeSellingSerialized)[0]
+                query_room_detail = RoomDetail.objects.filter(room_id=roomId).values('id', 'room', 'price', 'type_selling')
+                for roomDetail in query_room_detail:
+                    typeSelling = TypeSelling.objects.filter(id=roomDetail["type_selling"]).values('id', 'name')
+                    typeSellingSerialized = json.dumps(list(typeSelling), cls=DjangoJSONEncoder)
+                    roomDetail["type_selling"] = json.loads(typeSellingSerialized)[0]
 
-            serializedQuery = json.dumps(list(query_room_detail), cls=DjangoJSONEncoder)
-            roomDetails = json.loads(serializedQuery)
+                serializedQuery = json.dumps(list(query_room_detail), cls=DjangoJSONEncoder)
+                roomDetails = json.loads(serializedQuery)
 
-            queryImages = RoomImages.objects.filter(room_id=roomId).values('id', 'image', 'room')
-            for image in queryImages:
-                image["image"] = "/media/" + image["image"]
-            serializedQuery = json.dumps(list(queryImages), cls=DjangoJSONEncoder)
+                queryImages = RoomImages.objects.filter(room_id=roomId).values('id', 'image', 'room')
+                for image in queryImages:
+                    image["image"] = "/media/" + image["image"]
+                serializedQuery = json.dumps(list(queryImages), cls=DjangoJSONEncoder)
 
-            images = json.loads(serializedQuery)
-            response = {
-                'product_id': productId,
-                'room_id': roomId,
-                'name': name,
-                'description': description,
-                'contact_person_name': contactPersonName,
-                'contact_person_phone': contactPersonPhone,
-                'room_details': roomDetails,
-                'images': images,
-                'sqm_room': sqmRoom,
-                'bedroom_total': bedroomTotal,
-                'bathroom_total': bathroomTotal,
-                'guest_maximum': guestMaximum,
-                'apartment_id': apartment_id,
-                'apartment_name': apartment_name,
-            }
-            logger.info(response)
-            return JsonResponse(response, content_type='application/json', status=200)
+                images = json.loads(serializedQuery)
+                response = {
+                    'product_id': productId,
+                    'room_id': roomId,
+                    'name': name,
+                    'description': description,
+                    'contact_person_name': contactPersonName,
+                    'contact_person_phone': contactPersonPhone,
+                    'room_details': roomDetails,
+                    'images': images,
+                    'sqm_room': sqmRoom,
+                    'bedroom_total': bedroomTotal,
+                    'bathroom_total': bathroomTotal,
+                    'guest_maximum': guestMaximum,
+                    'apartment_id': apartment_id,
+                    'apartment_name': apartment_name,
+                }
+                logger.info(response)
+                return JsonResponse(response, content_type='application/json', status=200)
         except Exception as e:
             logger.exception('roomResource.update onError: {}'.format(str(e)))
             return JsonResponse({

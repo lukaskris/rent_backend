@@ -8,6 +8,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from api.models.ads.ad_bundle import AdsBundle
 from api.models.apartment.apartment import Apartment
 from api.models.banner.banner import Banner
+from api.models.benefit.commission_percentage import CommissionPercentage
 from api.models.order.order_header import OrderHeader
 from api.models.room.room import Room
 from api.models.user.user import User
@@ -42,7 +43,6 @@ class UserAdmin(BaseUserAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
-
 
 
 class AdsBundleAdmin(admin.ModelAdmin):
@@ -89,9 +89,14 @@ class BannerAdmin(admin.ModelAdmin):
         return False
 
 
+class Commission(admin.ModelAdmin):
+    list_display = ('id', 'percentage')
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Room, RoomAdmin)
 admin.site.register(AdsBundle, AdsBundleAdmin)
 admin.site.register(OrderHeader, OrderHeaderAdmin)
 admin.site.register(Apartment, ApartmentAdmin)
 admin.site.register(Banner, BannerAdmin)
+admin.site.register(CommissionPercentage, Commission)

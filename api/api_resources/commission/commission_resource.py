@@ -2,11 +2,12 @@ from tastypie.authorization import Authorization
 from tastypie.resources import ModelResource
 
 from api.models.apartment.apartment import Apartment
+from api.models.benefit.commission_percentage import CommissionPercentage
 
 
-class ApartmentResource(ModelResource):
+class CommissionResource(ModelResource):
     class Meta:
-        queryset = Apartment.objects.filter(active=True)
-        resource_name = 'apartment'
+        queryset = CommissionPercentage.objects.all()
+        resource_name = 'commission'
         always_return_data = True
         authorization = Authorization()

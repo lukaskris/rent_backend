@@ -41,7 +41,7 @@ class OrderHeader(models.Model):
         unique_together = [['id', 'midtrans_id', 'invoice_ref_number']]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    midtrans_id = models.TextField(default="")
+    midtrans_id = models.TextField(default="", max_length=255)
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
     type_selling = models.ForeignKey(TypeSelling, on_delete=models.DO_NOTHING, default=None, blank=None, null=True)
     invoice_ref_number = models.CharField(max_length=500, default=auto_increment_invoice, null=True, blank=True)

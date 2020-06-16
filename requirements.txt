@@ -50,5 +50,5 @@ tzlocal==2.1
 urllib3==1.25.7
 views==0.3
 virtualenv==16.7.9
-Werkzeug==0.15.2
+Werkzeug==0.15.3
 whitenoise==5.0.1

@@ -4,6 +4,7 @@ import logging
 
 from django.conf.urls import url
 from django.contrib.auth import authenticate, login, logout
+from django.db import transaction
 from django.http import JsonResponse
 from tastypie import http, fields
 from tastypie.authorization import Authorization
@@ -13,6 +14,7 @@ from tastypie.resources import ModelResource
 from tastypie.utils import trailing_slash
 
 from api.api_resources.helper.multipart_request import MultipartResource
+from api.models.benefit.benefit_staff import BalanceStaff
 from api.models.user.user import User
 
 logger = logging.getLogger('api.user')
@@ -160,7 +162,7 @@ class UserResource(MultipartResource, ModelResource):
                         'message': 'Username or password incorrect'
                     }
                 }, content_type='application/json', status=401)
-        except:
+        except Exception as e:
             return JsonResponse({
                 'meta': {},
                 'objects': [],
@@ -179,74 +181,85 @@ class UserResource(MultipartResource, ModelResource):
             return JsonResponse({
                 'success': True
             }, content_type='application/json', status=200)
-        except:
+        except Exception as e:
             return JsonResponse({
                 'objects': {},
                 'error': True
             }, content_type='application/json', status=400)
 
-
     def register(self, request, **kwargs):
-        logger.info('UserResource.register')
-        data = self.deserialize(
-            request, request.body,
-            format=request.content_type
-        )
-
-        print('UserResource.register: {}'.format(json.dumps(data)))
-
-        email = data.get('email', '')
-        password = data.get('password', '')
-
-        # try to geet the user by email
         try:
-            user = User.objects.get(email=email)
-            print(user)
-            return JsonResponse({
-                'objects': [],
-                'error': {
-                    "message": "This email is already registered"
-                }
-            }, content_type='application/json', status=400)
-        except User.DoesNotExist:
-            # the user with this email does not exist
-            try:
-                nano = User.objects.filter(phone_number=data['phone_number']).first()
-                if nano is None:
-                    raise User.DoesNotExist
-                return JsonResponse({
-                    'objects': [],
-                    'error': {
-                        "message": "This phone is already registered"
-                    }
-                }, content_type='application/json', status=400)
-            except User.DoesNotExist:
-                # create a new user
-                user = User.objects.create(
-                    email=email,
-                    name=data.get('name', ''),
-                    phone_number=data['phone_number'],
-                    is_staff=data['is_staff'])
-                user.set_password(data['password'])
-                user.save()
-                user = authenticate(email=email, password=data['password'])
-                login(request, user)
-                print('UserResource.Register: login successful')
-                return JsonResponse({
-                    'meta': {
-                        'message': ''
-                    },
-                    'objects': [
-                        {
-                            'id': user.id,
-                            'email': email,
-                            'password': password,
-                            'name': user.name,
-                            'is_superuser': user.is_superuser,
-                            'is_staff': int(user.is_staff == True),
-                            'phone_number': str(user.phone_number),
-                            'image_url': str(user.image_url)
+            logger.info('UserResource.register')
+            data = self.deserialize(
+                request, request.body,
+                format=request.content_type
+            )
+
+            print('UserResource.register: {}'.format(json.dumps(data)))
+
+            email = data.get('email', '')
+            password = data.get('password', '')
+            with transaction.atomic():
+                # try to get the user by email
+                try:
+                    user = User.objects.get(email=email)
+                    print(user)
+                    return JsonResponse({
+                        'objects': [],
+                        'error': {
+                            "message": "This email is already registered"
                         }
-                    ],
-                    'error': {}
-                }, content_type='application/json', status=200)
+                    }, content_type='application/json', status=400)
+                except User.DoesNotExist:
+                    # the user with this email does not exist
+                    try:
+                        nano = User.objects.filter(phone_number=data['phone_number']).first()
+                        if nano is None:
+                            raise User.DoesNotExist
+                        return JsonResponse({
+                            'objects': [],
+                            'error': {
+                                "message": "This phone is already registered"
+                            }
+                        }, content_type='application/json', status=400)
+                    except User.DoesNotExist:
+                        # create a new user
+                        user = User.objects.create(
+                            email=email,
+                            name=data.get('name', ''),
+                            phone_number=data['phone_number'],
+                            is_staff=data['is_staff'])
+                        user.set_password(data['password'])
+                        user.save()
+                        if user.is_staff:
+                            BalanceStaff.objects.create(
+                                user=user,
+                                balance=0
+                            )
+                        user = authenticate(email=email, password=data['password'])
+                        login(request, user)
+                        print('UserResource.Register: login successful')
+                        return JsonResponse({
+                            'meta': {
+                                'message': ''
+                            },
+                            'objects': [
+                                {
+                                    'id': user.id,
+                                    'email': email,
+                                    'password': password,
+                                    'name': user.name,
+                                    'is_superuser': user.is_superuser,
+                                    'is_staff': int(user.is_staff == True),
+                                    'phone_number': str(user.phone_number),
+                                    'image_url': str(user.image_url)
+                                }
+                            ],
+                            'error': {}
+                        }, content_type='application/json', status=200)
+        except Exception as e:
+            return JsonResponse({
+                "error": {
+                    "message": str(e)
+                }
+            }, content_type='application/json', status=500)

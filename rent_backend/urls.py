@@ -22,7 +22,10 @@ from tastypie.api import Api
 from api.api_resources.ads.ads_bundle_resource import AdsBundleResource
 from api.api_resources.ads.room_ad_resource import RoomAdResource
 from api.api_resources.aparment.apartment_resource import ApartmentResource
+from api.api_resources.balance.balance_history_resource import BalanceHistoryResource
+from api.api_resources.balance.balance_user_resource import BalanceUserResource
 from api.api_resources.banner.banner_resource import BannerResource
+from api.api_resources.commission.commission_resource import CommissionResource
 from api.api_resources.fcm_resource import FCMDeviceResource
 from api.api_resources.notification_resource import NotificationResource
 from api.api_resources.order.order_detail_resource import OrderDetailResource
@@ -53,6 +56,9 @@ v1_api.register(TypeSellingResource())
 v1_api.register(RoomImagesResource())
 v1_api.register(BannerResource())
 v1_api.register(AdsBundleResource())
+v1_api.register(BalanceHistoryResource())
+v1_api.register(BalanceUserResource())
+v1_api.register(CommissionResource())
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),

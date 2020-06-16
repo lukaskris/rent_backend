@@ -17,7 +17,6 @@ import django_heroku
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
@@ -32,11 +31,11 @@ MIDTRANS_SANDBOX = 'https://app.sandbox.midtrans.com/snap/v1/transactions'
 MIDTRANS_PRODUCTION = 'https://app.midtrans.com/snap/v1/transactions'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 TASTYPIE_FULL_DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2', '0.0.0.0', '192.168.0.101']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2', '0.0.0.0', '192.168.0.101', 'www.sewanoproperty.com', 'sewanoproperty.com']
 AUTH_USER_MODEL = "api.User"
-APPEND_SLASH=False
+APPEND_SLASH = False
 # AUTHENTICATION_BACKENDS = ('api.backends.CustomBackend',)
 
 
@@ -61,16 +60,16 @@ INSTALLED_APPS = [
 ]
 
 FCM_DJANGO_SETTINGS = {
-        "APP_VERBOSE_NAME": "Sewano",
-         # default: _('FCM Django')
-        "FCM_SERVER_KEY": "AAAATgN8f_c:APA91bHObGjKyUmB6lfoNI-Iq1fad18cZP7FPfoe9jPtPAdKOlbcw2gdn3vvo1DFJQCBG2beQVruuHnhwhtIC_a-v-MjDTWHhU1MT4MnCI6Vq0_O20F492s61R4tuOINlRQp6qNj-meT",
-         # true if you want to have only one active device per registered user at a time
-         # default: False
-        "ONE_DEVICE_PER_USER": False,
-         # devices to which notifications cannot be sent,
-         # are deleted upon receiving error response from FCM
-         # default: False
-        "DELETE_INACTIVE_DEVICES": True,
+    "APP_VERBOSE_NAME": "Sewano",
+    # default: _('FCM Django')
+    "FCM_SERVER_KEY": "AAAATgN8f_c:APA91bHObGjKyUmB6lfoNI-Iq1fad18cZP7FPfoe9jPtPAdKOlbcw2gdn3vvo1DFJQCBG2beQVruuHnhwhtIC_a-v-MjDTWHhU1MT4MnCI6Vq0_O20F492s61R4tuOINlRQp6qNj-meT",
+    # true if you want to have only one active device per registered user at a time
+    # default: False
+    "ONE_DEVICE_PER_USER": False,
+    # devices to which notifications cannot be sent,
+    # are deleted upon receiving error response from FCM
+    # default: False
+    "DELETE_INACTIVE_DEVICES": True,
 }
 
 MIDDLEWARE = [
@@ -104,13 +103,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rent_backend.wsgi.application'
 
-
-
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
 DATABASES = {
-    'default': {
+    'local': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'sewano',
         'USER': 'lukas_kris',
@@ -118,16 +115,23 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '5432',
     },
-    'network': {
+    'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'da4em8flcek9ul',
-        'USER': 'wmeaxkobllqoto',
-        'PASSWORD': '1c813382df02bc2d2b0be9a6993287dea818bcce23f8079a476f3134348dbe2a',
-        'HOST': 'ec2-52-7-39-178.compute-1.amazonaws.com',
+        'NAME': 'vistapro_sewano',
+        'USER': 'vistapro_root',
+        'PASSWORD': 'K}b8);5BveSN',
+        'HOST': 'localhost',
         'PORT': '5432',
+    },
+    'mysql': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'vistapro_sewano',
+        'USER': 'vistapro_root',
+        'PASSWORD': 't8jU&kkht}&r',
+        'HOST': '103.147.154.49',
+        'PORT': '3306',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -147,7 +151,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
@@ -162,13 +165,12 @@ USE_L10N = True
 
 SITE_ID = 2
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(PROJECT_ROOT, 'staticfiles')     # Used to get static api_resources from web server
+STATIC_ROOT = os.path.join(PROJECT_ROOT, 'staticfiles')  # Used to get static api_resources from web server
 
 # Extra places for collectstatic to find static files.
 STATICFILES_DIRS = (

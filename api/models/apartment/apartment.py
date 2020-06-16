@@ -6,5 +6,5 @@ class Apartment(models.Model):
     location = models.TextField()
     active = models.BooleanField(default=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name

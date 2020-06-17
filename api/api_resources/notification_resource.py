@@ -89,28 +89,6 @@ class NotificationResource(ModelResource):
                 order_header.save()
                 logger.info("Order header saved {}".format(order_header))
                 if transaction_status == "settlement":
-                    try:
-                        balance_staff = BalanceStaff.objects.get(user=order_header.product.created_by)
-                    except BalanceStaff.DoesNotExist:
-                        balance_staff = BalanceStaff.objects.create(user=order_header.product.created_by)
-
-                    percentage = CommissionPercentage.objects.first().percentage
-
-                    commission = order_header.grand_total * (percentage / 100)
-
-                    balance_staff.balance = balance_staff.balance + commission
-                    balance_staff.save()
-                    benefit_order = BenefitOrder.objects.create(
-                        user=order_header.product.created_by,
-                        order=order_header,
-                        nominal=commission
-                    )
-                    BalanceHistory.objects.create(
-                        user=order_header.product.created_by,
-                        benefit_order=benefit_order,
-                        nominal=commission
-                    )
-
                     Notification.objects.create(
                         user_id=order_header.user_id,
                         message=message_notification,
@@ -130,10 +108,34 @@ class NotificationResource(ModelResource):
                     except Exception as e:
                         print(e)
 
-                    device2 = FCMDevice.objects.filter(user_id=order_header.product.created_by.id)
-                    logger.info("Message data {}".format(message_data))
-                    price_formatted = "IDR {:,.0f}".format(commission)
-                    device2.send_message(title="Komisi", body="Kamu mendapatkan komisi penyewaan apartemen {}".format(price_formatted), data=[])
+                    if order_header.type_selling_id is not None and not order_header.user.is_superuser:
+
+                        try:
+                            balance_staff = BalanceStaff.objects.get(user=order_header.product.created_by)
+                        except BalanceStaff.DoesNotExist:
+                            balance_staff = BalanceStaff.objects.create(user=order_header.product.created_by)
+
+                        percentage = CommissionPercentage.objects.first().percentage
+
+                        commission = order_header.grand_total * (percentage / 100)
+
+                        balance_staff.balance = balance_staff.balance + commission
+                        balance_staff.save()
+                        benefit_order = BenefitOrder.objects.create(
+                            user=order_header.product.created_by,
+                            order=order_header,
+                            nominal=commission
+                        )
+                        BalanceHistory.objects.create(
+                            user=order_header.product.created_by,
+                            benefit_order=benefit_order,
+                            nominal=commission
+                        )
+                        device2 = FCMDevice.objects.filter(user_id=order_header.product.created_by.id)
+                        price_formatted = "IDR {:,.0f}".format(commission)
+                        device2.send_message(title="Komisi",
+                                             body="Kamu mendapatkan komisi penyewaan apartemen {}".format(
+                                                 price_formatted), data=[])
 
                 return JsonResponse({
                     'success': {

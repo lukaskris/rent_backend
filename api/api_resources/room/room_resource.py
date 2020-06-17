@@ -140,7 +140,7 @@ class RoomResource(ModelResource):
                     id = roomImage.get('id', -1)
                     RoomDetail.objects.filter(pk=id).delete()
 
-                query_room_detail = RoomDetail.objects.filter(room_id=roomId).values('id', 'room', 'price', 'type_selling')
+                query_room_detail = RoomDetail.objects.filter(room_id=roomId).order_by('type_selling_id').values('id', 'room', 'price', 'type_selling')
                 for roomDetail in query_room_detail:
                     typeSelling = TypeSelling.objects.filter(id=roomDetail["type_selling"]).values('id', 'name')
                     typeSellingSerialized = json.dumps(list(typeSelling), cls=DjangoJSONEncoder)

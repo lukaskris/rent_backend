@@ -168,9 +168,9 @@ class OrderHeaderResource(ModelResource):
                         user_id=data['custom_field3'],
                         payment_date=timezone.now(),
                         order_status_id=1,
-                        expired_date=timezone.now() + datetime.timedelta(days=1),
-                        check_in_time=datetime.datetime.strptime(checkIn, DATETIME_FORMAT),
-                        check_out_time=datetime.datetime.strptime(checkOut, DATETIME_FORMAT)
+                        expired_date=timezone.now() + timedelta(days=1),
+                        check_in_time=datetime.strptime(checkIn, DATETIME_FORMAT),
+                        check_out_time=datetime.strptime(checkOut, DATETIME_FORMAT)
                     )
 
                     response = requests.request("POST", settings.MIDTRANS_SANDBOX, headers=headers,
@@ -178,6 +178,8 @@ class OrderHeaderResource(ModelResource):
                     print(response.json())
                     if response.status_code == 201:
                         order_header.save()
+                    else:
+                        order_header.delete()
                     return HttpResponse(
                         content=response.content,
                         status=response.status_code,

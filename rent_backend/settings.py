@@ -23,9 +23,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'e8a746$rb_+its$bgv+g!caznm*o@g8l()m)6q69p$tat@#wnu'
 
-MIDTRANS_MERCHANT_ID = 'G043237726'
-MIDTRANS_SERVER_KEY_SANDBOX = 'SB-Mid-server-m0c2evREDmiUhbZuOAOcJSwk:'
-MIDTRANS_SERVER_KEY_PRODUCTION = 'Mid-server-xMCUy9BUEtlb95SOw9eYJOpj:'
+MIDTRANS_MERCHANT_ID = 'G624887214'
+MIDTRANS_SERVER_KEY_SANDBOX = 'SB-Mid-server-atJ2H_V1IJgUskhGNhcu_F6_'
+MIDTRANS_SERVER_KEY_PRODUCTION = 'Mid-server-cWH1WJBu2GDx09QrehkEktVi'
 
 MIDTRANS_SANDBOX = 'https://app.sandbox.midtrans.com/snap/v1/transactions'
 MIDTRANS_PRODUCTION = 'https://app.midtrans.com/snap/v1/transactions'

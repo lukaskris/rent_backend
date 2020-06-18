@@ -45,7 +45,8 @@ class OrderHeaderResource(ModelResource):
             'check_out_time': ALL,
             'type_selling': ALL_WITH_RELATIONS,
             'active': ALL,
-            'order_date': ALL
+            'order_date': ALL,
+            'order_status': ALL_WITH_RELATIONS
         }
 
     def prepend_urls(self):
@@ -73,12 +74,18 @@ class OrderHeaderResource(ModelResource):
         try:
             percentage = CommissionPercentage.objects.first().percentage
             # datetime_test = datetime.strptime('May 23 2020', '%b %d %Y')
-            datetime_test = timezone.now()
+            datetime_test = timezone.now().today()
+            query_day = OrderHeader.objects.filter(
+                type_selling__isnull=False,
+                order_status_id=2,
+                active=True,
+                order_date__day=datetime_test.day
+            ).query
             order_header_today = self.nonechecker(OrderHeader.objects.filter(
                 type_selling__isnull=False,
                 order_status_id=2,
                 active=True,
-                order_date=datetime_test
+                order_date__day=datetime_test.day
             ).aggregate(Sum('grand_total'))["grand_total__sum"])
             commission_today = order_header_today * (percentage / 100)
             admin_balance_today = order_header_today * ((10 - percentage) / 100)

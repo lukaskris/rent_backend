@@ -7,3 +7,6 @@ class OrderStatusResource(ModelResource):
     class Meta:
         queryset = OrderStatus.objects.all()
         resource_name = 'order_status'
+        filtering = {
+            'id': ['exact'],
+        }

@@ -72,23 +72,24 @@ def get_recommendation(self, request, **kwargs):
             ads = False
             if room.room_id in valid_ads_list:
                 ads = True
-            list_response.append({
-                'product_id': room.product_id,
-                'room_id': room.room_id,
-                'apartment_name': room.apartment.name,
-                'apartment_id': room.apartment.id,
-                'name': room.name,
-                'description': room.description,
-                'contact_person_name': room.contact_person_name,
-                'contact_person_phone': room.contact_person_phone,
-                'room_details': roomDetails,
-                'images': images,
-                'sqm_room': room.sqm_room,
-                'bedroom_total': room.bedroom_total,
-                'bathroom_total': room.bathroom_total,
-                'guest_maximum': room.guest_maximum,
-                'ads': ads
-            })
+            if query_room_detail.exists():
+                list_response.append({
+                    'product_id': room.product_id,
+                    'room_id': room.room_id,
+                    'apartment_name': room.apartment.name,
+                    'apartment_id': room.apartment.id,
+                    'name': room.name,
+                    'description': room.description,
+                    'contact_person_name': room.contact_person_name,
+                    'contact_person_phone': room.contact_person_phone,
+                    'room_details': roomDetails,
+                    'images': images,
+                    'sqm_room': room.sqm_room,
+                    'bedroom_total': room.bedroom_total,
+                    'bathroom_total': room.bathroom_total,
+                    'guest_maximum': room.guest_maximum,
+                    'ads': ads
+                })
             # logger.info(list_response)
 
         return JsonResponse({

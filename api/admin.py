@@ -76,7 +76,7 @@ class OrderHeaderAdmin(admin.ModelAdmin):
 
 
 class ApartmentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'location')
+    list_display = ('id', 'name')
 
     def has_delete_permission(self, request, obj=None):
         return False

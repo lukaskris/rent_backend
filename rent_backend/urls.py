@@ -22,6 +22,8 @@ from tastypie.api import Api
 from api.api_resources.ads.ads_bundle_resource import AdsBundleResource
 from api.api_resources.ads.room_ad_resource import RoomAdResource
 from api.api_resources.aparment.apartment_resource import ApartmentResource
+from api.api_resources.aparment.location_resource import LocationResource
+from api.api_resources.aparment.tower_resource import TowerResource
 from api.api_resources.balance.balance_history_resource import BalanceHistoryResource
 from api.api_resources.balance.balance_user_resource import BalanceUserResource
 from api.api_resources.banner.banner_resource import BannerResource
@@ -59,6 +61,8 @@ v1_api.register(AdsBundleResource())
 v1_api.register(BalanceHistoryResource())
 v1_api.register(BalanceUserResource())
 v1_api.register(CommissionResource())
+v1_api.register(TowerResource())
+v1_api.register(LocationResource())
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),

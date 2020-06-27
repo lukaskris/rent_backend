@@ -1,4 +1,4 @@
-from django_filters import fields
+from tastypie import fields
 from tastypie.authorization import Authorization
 from tastypie.constants import ALL_WITH_RELATIONS
 from tastypie.resources import ModelResource

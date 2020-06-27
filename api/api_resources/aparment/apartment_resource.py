@@ -14,8 +14,12 @@ from api.models.apartment.tower import Tower
 
 
 class ApartmentResource(ModelResource):
-    towers = fields.ToManyField('api.api_resources.aparment.tower_resource.TowerResource', 'tower_set', full=True,
-                                null=True)
+    towers = fields.ToManyField('api.api_resources.aparment.tower_resource.TowerResource', full=True,
+                                null=True,
+                                attribute=lambda bundle: Tower.objects.filter(
+                                    active=True,
+                                    apartment=bundle.obj
+                                ))
 
     # room_details = fields.ToManyField(RoomDetailResource, 'room_detail', full=True, null=True)
     class Meta:
@@ -64,7 +68,7 @@ class ApartmentResource(ModelResource):
 
                 for tower in towers:
                     name_tower = tower.get("name", '')
-                    active_tower = tower.get("active", False)
+                    active_tower = tower.get("active", True)
                     id_tower = tower.get("id", 0)
                     try:
                         td = Tower.objects.get(id=id_tower)

@@ -1,4 +1,5 @@
 from tastypie.authorization import Authorization
+from tastypie.constants import ALL
 from tastypie.resources import ModelResource
 
 from api.models.apartment.apartment import Apartment
@@ -10,3 +11,6 @@ class ApartmentResource(ModelResource):
         resource_name = 'apartment'
         always_return_data = True
         authorization = Authorization()
+        filtering = {
+            'id': ALL
+        }

@@ -31,7 +31,7 @@ MIDTRANS_SANDBOX = 'https://app.sandbox.midtrans.com/snap/v1/transactions'
 MIDTRANS_PRODUCTION = 'https://app.midtrans.com/snap/v1/transactions'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 TASTYPIE_FULL_DEBUG = True
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2', '0.0.0.0', '192.168.0.101', 'www.sewanoproperty.com', 'sewanoproperty.com']
 AUTH_USER_MODEL = "api.User"

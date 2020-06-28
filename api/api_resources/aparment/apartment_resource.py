@@ -16,14 +16,10 @@ from api.models.apartment.tower import Tower
 class ApartmentResource(ModelResource):
     towers = fields.ToManyField('api.api_resources.aparment.tower_resource.TowerResource', full=True,
                                 null=True,
-                                attribute=lambda bundle: Tower.objects.filter(
-                                    active=True,
-                                    apartment=bundle.obj
-                                ))
+                                attribute='tower_set')
 
-    # room_details = fields.ToManyField(RoomDetailResource, 'room_detail', full=True, null=True)
     class Meta:
-        queryset = Apartment.objects.filter(active=True)
+        queryset = Apartment.objects.all()
         resource_name = 'apartment'
         always_return_data = True
         list_allowed_methods = ['get', 'post', 'put']

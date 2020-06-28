@@ -22,6 +22,8 @@ from .room_detail_resource import RoomDetailResource
 from .room_images_resource import RoomImagesResource
 from .search_resource import search
 from ..aparment.apartment_resource import ApartmentResource
+from ..aparment.tower_resource import TowerResource
+from ...models.apartment.tower import Tower
 
 logger = logging.getLogger('api.room_resource')
 
@@ -30,7 +32,8 @@ class RoomResource(ModelResource):
     created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
     room_details = fields.ToManyField(RoomDetailResource, 'room_detail', full=True, null=True)
     images = fields.ToManyField(RoomImagesResource, 'room_images', full=True, null=True)
-    apartment = fields.ToOneField(ApartmentResource, 'apartment', full=True, null=True, )
+    apartment = fields.ToOneField(ApartmentResource, 'apartment', full=True, null=True)
+    tower = fields.ToOneField(TowerResource, 'tower', full=True, null=True)
 
     class Meta:
         queryset = Room.objects.filter(status=True)
@@ -95,6 +98,7 @@ class RoomResource(ModelResource):
                 guestMaximum = data.get('guest_maximum', 1)
                 apartment_id = data.get('apartment_id', 0)
                 apartment_name = data.get('apartment_name', '')
+                tower_id = data.get('tower_id', 0)
 
                 logger.info("RoomResource.update: {}".format(roomId))
                 logger.info("RoomResource.update: {}".format("prepare update"))
@@ -108,7 +112,8 @@ class RoomResource(ModelResource):
                     bedroom_total=bedroomTotal,
                     bathroom_total=bathroomTotal,
                     guest_maximum=guestMaximum,
-                    apartment_id=apartment_id
+                    apartment_id=apartment_id,
+                    tower=tower_id
                 )
 
                 for roomDetail in roomDetails:
@@ -154,7 +159,11 @@ class RoomResource(ModelResource):
                     image["image"] = "/media/" + image["image"]
                 serializedQuery = json.dumps(list(queryImages), cls=DjangoJSONEncoder)
 
+                queryTower = Tower.objects.filter(id=tower_id).values('id', 'name')
+                serializedTower = json.dumps(list(queryTower), cls=DjangoJSONEncoder)
+
                 images = json.loads(serializedQuery)
+                tower = json.loads(serializedTower)
                 response = {
                     'product_id': productId,
                     'room_id': roomId,
@@ -170,6 +179,7 @@ class RoomResource(ModelResource):
                     'guest_maximum': guestMaximum,
                     'apartment_id': apartment_id,
                     'apartment_name': apartment_name,
+                    'tower': tower
                 }
                 logger.info(response)
                 return JsonResponse(response, content_type='application/json', status=200)

@@ -25,7 +25,8 @@ class ApartmentResource(ModelResource):
         list_allowed_methods = ['get', 'post', 'put']
         authorization = Authorization()
         filtering = {
-            'id': ALL
+            'id': ALL,
+            'active': ALL
         }
 
     def prepend_urls(self):

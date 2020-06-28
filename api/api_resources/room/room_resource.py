@@ -102,19 +102,18 @@ class RoomResource(ModelResource):
 
                 logger.info("RoomResource.update: {}".format(roomId))
                 logger.info("RoomResource.update: {}".format("prepare update"))
-                room = Room.objects.filter(pk=roomId)
-                room.update(
-                    name=name,
-                    description=description,
-                    contact_person_name=contactPersonName,
-                    contact_person_phone=contactPersonPhone,
-                    sqm_room=sqmRoom,
-                    bedroom_total=bedroomTotal,
-                    bathroom_total=bathroomTotal,
-                    guest_maximum=guestMaximum,
-                    apartment_id=apartment_id,
-                    tower=tower_id
-                )
+                room = Room.objects.get(room_id=roomId)
+                room.name = name
+                room.description = description
+                room.contact_person_name = contactPersonName
+                room.contact_person_phone = contactPersonPhone
+                room.sqm_room = sqmRoom
+                room.bedroom_total = bedroomTotal
+                room.bathroom_total = bathroomTotal
+                room.guest_maximum = guestMaximum
+                room.apartment_id = apartment_id
+                room.tower = Tower.objects.get(id=tower_id)
+                room.save()
 
                 for roomDetail in roomDetails:
                     price = roomDetail.get("price", '')
@@ -136,7 +135,8 @@ class RoomResource(ModelResource):
                         logger.info("Create room detail: ")
                         logger.info(roomDetail)
                 roomDetailIds = list(map(lambda x: x.get("type_selling_id"), roomDetails))
-                deletedRoomDetails = RoomDetail.objects.filter(room_id=roomId).exclude(type_selling_id__in=roomDetailIds)
+                deletedRoomDetails = RoomDetail.objects.filter(room_id=roomId).exclude(
+                    type_selling_id__in=roomDetailIds)
                 logger.info(deletedRoomDetails)
                 for roomDetail in deletedRoomDetails:
                     roomDetail.delete()
@@ -145,7 +145,10 @@ class RoomResource(ModelResource):
                     id = roomImage.get('id', -1)
                     RoomDetail.objects.filter(pk=id).delete()
 
-                query_room_detail = RoomDetail.objects.filter(room_id=roomId).order_by('type_selling_id').values('id', 'room', 'price', 'type_selling')
+                query_room_detail = RoomDetail.objects.filter(room_id=roomId).order_by('type_selling_id').values('id',
+                                                                                                                 'room',
+                                                                                                                 'price',
+                                                                                                                 'type_selling')
                 for roomDetail in query_room_detail:
                     typeSelling = TypeSelling.objects.filter(id=roomDetail["type_selling"]).values('id', 'name')
                     typeSellingSerialized = json.dumps(list(typeSelling), cls=DjangoJSONEncoder)
@@ -159,11 +162,10 @@ class RoomResource(ModelResource):
                     image["image"] = "/media/" + image["image"]
                 serializedQuery = json.dumps(list(queryImages), cls=DjangoJSONEncoder)
 
-                queryTower = Tower.objects.filter(id=tower_id).values('id', 'name')
-                serializedTower = json.dumps(list(queryTower), cls=DjangoJSONEncoder)
+                queryTower = Tower.objects.filter(id=tower_id).values('id', 'name', 'active').first()
 
                 images = json.loads(serializedQuery)
-                tower = json.loads(serializedTower)
+
                 response = {
                     'product_id': productId,
                     'room_id': roomId,
@@ -179,7 +181,11 @@ class RoomResource(ModelResource):
                     'guest_maximum': guestMaximum,
                     'apartment_id': apartment_id,
                     'apartment_name': apartment_name,
-                    'tower': tower
+                    'tower': {
+                        'name': queryTower['name'],
+                        'active': queryTower['active'],
+                        'id': queryTower['id']
+                    }
                 }
                 logger.info(response)
                 return JsonResponse(response, content_type='application/json', status=200)

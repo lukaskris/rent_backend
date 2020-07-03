@@ -19,12 +19,15 @@ logger = logging.getLogger('api.recommendation')
 
 def get_recommendation(self, request, **kwargs):
     try:
+        limit_ads = 20
+        limit_trend_item = 2
+
         order_header_set = OrderHeader.objects.filter(order_status_id__in=[1, 2]).values_list('product_id',
                                                                                               flat=True).annotate(
-            product_id_count=Count('product_id')).order_by('-product_id')[:2]
+            product_id_count=Count('product_id')).order_by('-product_id')[:limit_trend_item]
         logger.info("Order header set: {}".format(order_header_set))
         valid_ads_list = RoomAd.objects.filter(expired_date__gte=datetime.datetime.now()).values_list('room_id',
-                                                                                                      flat=True)[:5]
+                                                                                                      flat=True)[:limit_ads]
         logger.info("Value ads list: {}".format(valid_ads_list))
 
         ids = []
@@ -36,8 +39,10 @@ def get_recommendation(self, request, **kwargs):
             for data in valid_ads_list:
                 ids.append(data)
         logger.info("List of id: {}".format(ids))
-        if len(ids) < 5:
-            diff = 5 - len(ids)
+
+        # if ids still < 20, need more data, just get data non include at ids
+        if len(ids) < limit_ads:
+            diff = limit_ads - len(ids)
             logger.info("DIFF: {}".format(diff))
             for id in Room.objects.all().exclude(product_id__in=ids).order_by('room_id').values_list(
                     'product_id',
@@ -46,11 +51,13 @@ def get_recommendation(self, request, **kwargs):
                 ids.append(id)
             logger.info(ids)
 
+        # query get recommendation item 20 ads : 2 trend item or another
         query = Room.objects.all().filter(product_id__in=ids, status=True) if len(ids) > 0 else Room.objects.filter(
-            status=True).order_by('room_id')[:5]
+            status=True).order_by('room_id')[:len(ids)]
 
         list_response = []
         for room in query:
+            # get 2 type selling except selling room
             query_room_detail = RoomDetail.objects.filter(room_id=room.room_id).exclude(type_selling_id=4).values('id',
                                                                                                                   'room',
                                                                                                                   'price',

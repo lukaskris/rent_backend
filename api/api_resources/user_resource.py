@@ -27,11 +27,12 @@ class UserResource(MultipartResource, ModelResource):
         resource_name = 'users'
         allowed_methods = ['get', 'post', 'put']
         always_return_data = True
-        excludes = ('password', 'is_active', 'date_joined')
+        excludes = ('password', 'date_joined')
         filtering = {
             'id': ALL,
             'is_staff': ALL,
-            'is_superuser': ALL
+            'is_superuser': ALL,
+            'is_active': ALL,
         }
         authorization = Authorization()
 

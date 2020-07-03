@@ -122,14 +122,6 @@ DATABASES = {
         'PASSWORD': 'K}b8);5BveSN',
         'HOST': 'localhost',
         'PORT': '5432',
-    },
-    'mysql': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'vistapro_sewano',
-        'USER': 'vistapro_root',
-        'PASSWORD': 't8jU&kkht}&r',
-        'HOST': '103.147.154.49',
-        'PORT': '3306',
     }
 }
 

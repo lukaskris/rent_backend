@@ -4,14 +4,13 @@ import logging
 from datetime import timedelta, datetime
 from decimal import Decimal
 
-from django.db import transaction
-from django.utils import timezone
-
 import requests
 from django.conf import settings
 from django.conf.urls import url
-from django.db.models import Q, Sum
+from django.db import transaction
+from django.db.models import Sum
 from django.http import HttpResponse, JsonResponse
+from django.utils import timezone
 from tastypie import fields
 from tastypie.constants import ALL
 from tastypie.resources import ModelResource, ALL_WITH_RELATIONS
@@ -75,12 +74,6 @@ class OrderHeaderResource(ModelResource):
             percentage = CommissionPercentage.objects.first().percentage
             # datetime_test = datetime.strptime('May 23 2020', '%b %d %Y')
             datetime_test = timezone.now().today()
-            query_day = OrderHeader.objects.filter(
-                type_selling__isnull=False,
-                order_status_id=2,
-                active=True,
-                order_date__day=datetime_test.day
-            ).query
             order_header_today = self.nonechecker(OrderHeader.objects.filter(
                 type_selling__isnull=False,
                 order_status_id=2,
@@ -165,11 +158,12 @@ class OrderHeaderResource(ModelResource):
                 customField2 = data['custom_field2'].split('|')
                 checkIn = customField2[0]
                 checkOut = customField2[1]
+                items = data['item_details']
 
                 if "custom_field1" in data:
                     order_header = OrderHeader.objects.create(
                         midtrans_id=data["transaction_details"]["order_id"],
-                        product_id=data['item_details'][0]['id'],
+                        product_id=items[0]['id'],
                         type_selling_id=data['custom_field1'],
                         grand_total=data['transaction_details']['gross_amount'],
                         user_id=data['custom_field3'],

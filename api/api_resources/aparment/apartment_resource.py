@@ -26,7 +26,8 @@ class ApartmentResource(ModelResource):
         authorization = Authorization()
         filtering = {
             'id': ALL,
-            'active': ALL
+            'active': ALL,
+            'name': ALL
         }
 
     def prepend_urls(self):

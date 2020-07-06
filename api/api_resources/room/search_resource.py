@@ -8,6 +8,7 @@ from django.http import JsonResponse
 
 # models
 from api.api_resources.query.search_query import SearchQuery
+from api.models.apartment.tower import Tower
 from api.models.room.room_image import RoomImages
 
 logger = logging.getLogger('api.search')
@@ -29,7 +30,8 @@ apartment_name = 13
 type_selling_id = 14
 type_selling_name = 15
 room_detail_id = 16
-ad = 18
+tower_id = 18
+ad = 19
 
 
 def search(self, request):
@@ -64,6 +66,7 @@ def search(self, request):
 
         for room in rooms:
             queryImages = RoomImages.objects.filter(room_id=room[1]).values('id', 'image', 'room')
+            tower = Tower.objects.get(id=int(room[tower_id]))
             for image in queryImages:
                 image["image"] = "/media/" + image["image"]
             serializedQuery = json.dumps(list(queryImages), cls=DjangoJSONEncoder)
@@ -94,6 +97,11 @@ def search(self, request):
                 'bathroom_total': room[bathroom_total],
                 'guest_maximum': room[guest_maximum],
                 'rating': room[rating],
+                'tower': {
+                    'name': tower.name,
+                    'active': tower.active,
+                    'id': tower.id
+                },
                 'ads': room[ad]
             })
 

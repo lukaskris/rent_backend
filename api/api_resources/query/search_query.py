@@ -43,6 +43,7 @@ class SearchQuery:
             room_detail_view.name,
             room_detail_view.id,
             order_headers.count,
+            api_room.tower_id,
             {ads_field}
         FROM
             api_room

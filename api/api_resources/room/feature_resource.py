@@ -14,5 +14,9 @@ class FeaturesResource(ModelResource):
         always_return_data = True
         allowed_methods = ['get', 'post', 'put']
         filtering = {
-            'status': ALL
+            'status': ALL,
+            'name': ALL
+        }
+        ordering = {
+            'name'
         }

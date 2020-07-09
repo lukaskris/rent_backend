@@ -22,6 +22,7 @@ from api.api_resources.product.product_resource import ProductResource
 from api.api_resources.user_resource import UserResource
 from api.models.benefit.commission_percentage import CommissionPercentage
 from api.models.order.order_header import OrderHeader
+from api.models.room.feature import Feature
 
 logger = logging.getLogger('api.order_header')
 
@@ -155,61 +156,68 @@ class OrderHeaderResource(ModelResource):
                 }
 
                 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
-                customField2 = data['custom_field2'].split('|')
-                checkIn = customField2[0]
-                checkOut = customField2[1]
+                customField = data['custom_field1']
+                customFieldJson = json.loads(customField)
+                checkIn = customFieldJson['check_in']
+                checkOut = customFieldJson['check_out']
+                type_selling_id = customFieldJson['type_selling_id']
+                user_id = data['custom_field2']
+                type_product = customFieldJson['type_product']
                 items = data['item_details']
 
-                if "custom_field1" in data:
+                if type_product == "product":
                     order_header = OrderHeader.objects.create(
                         midtrans_id=data["transaction_details"]["order_id"],
                         product_id=items[0]['id'],
-                        type_selling_id=data['custom_field1'],
+                        type_selling_id=type_selling_id,
                         grand_total=data['transaction_details']['gross_amount'],
-                        user_id=data['custom_field3'],
+                        user_id=user_id,
                         payment_date=timezone.now(),
                         order_status_id=1,
                         expired_date=timezone.now() + timedelta(days=1),
                         check_in_time=datetime.strptime(checkIn, DATETIME_FORMAT),
                         check_out_time=datetime.strptime(checkOut, DATETIME_FORMAT)
                     )
-
-                    response = requests.request("POST", settings.MIDTRANS_SANDBOX, headers=headers,
-                                                data=json.dumps(data))
-                    print(response.json())
-                    if response.status_code == 201:
-                        order_header.save()
-                    else:
-                        order_header.delete()
-                    return HttpResponse(
-                        content=response.content,
-                        status=response.status_code,
-                        content_type=response.headers['Content-Type']
-                    )
-                else:
+                elif type_product == "ads":
                     order_header = OrderHeader.objects.create(
                         midtrans_id=data["transaction_details"]["order_id"],
                         product_id=data['item_details'][0]['id'],
                         type_selling_id=None,
                         grand_total=data['transaction_details']['gross_amount'],
-                        user_id=data['custom_field3'],
+                        user_id=user_id,
                         payment_date=timezone.now(),
                         order_status_id=1,
                         expired_date=timezone.now() + timedelta(days=1),
                         check_in_time=timezone.now(),
                         check_out_time=timezone.now()
                     )
-
-                    response = requests.request("POST", settings.MIDTRANS_SANDBOX, headers=headers,
-                                                data=json.dumps(data))
-                    print(response.json())
-                    if response.status_code == 201:
-                        order_header.save()
-                    return HttpResponse(
-                        content=response.content,
-                        status=response.status_code,
-                        content_type=response.headers['Content-Type']
+                else:
+                    feature = Feature.objects.get(pk=data['item_details'][0]['id'])
+                    order_header = OrderHeader.objects.create(
+                        midtrans_id=data["transaction_details"]["order_id"],
+                        product_id=feature.product_id,
+                        type_selling_id=None,
+                        grand_total=data['transaction_details']['gross_amount'],
+                        user_id=user_id,
+                        payment_date=timezone.now(),
+                        order_status_id=1,
+                        expired_date=timezone.now() + timedelta(days=1),
+                        check_in_time=datetime.strptime(checkIn, DATETIME_FORMAT),
+                        check_out_time=datetime.strptime(checkIn, DATETIME_FORMAT)
                     )
+
+                response = requests.request("POST", settings.MIDTRANS_SANDBOX, headers=headers,
+                                            data=json.dumps(data))
+                print(response.json())
+                if response.status_code == 201:
+                    order_header.save()
+                else:
+                    order_header.delete()
+                return HttpResponse(
+                    content=response.content,
+                    status=response.status_code,
+                    content_type=response.headers['Content-Type']
+                )
 
 
         except Exception as e:

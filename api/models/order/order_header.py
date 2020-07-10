@@ -3,6 +3,8 @@ import uuid
 from django.db import models
 from django.utils import timezone
 
+from api.models.apartment.apartment import Apartment
+from api.models.apartment.tower import Tower
 from api.models.order.order_status import OrderStatus
 from api.models.order.type_selling import TypeSelling
 
@@ -44,6 +46,10 @@ class OrderHeader(models.Model):
     midtrans_id = models.TextField(default="", max_length=255)
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
     type_selling = models.ForeignKey(TypeSelling, on_delete=models.DO_NOTHING, default=None, blank=None, null=True)
+    apartment = models.ForeignKey(Apartment, on_delete=models.DO_NOTHING, default=None, blank=None, null=True)
+    tower = models.ForeignKey(Tower, on_delete=models.DO_NOTHING, default=None, blank=None, null=True)
+    description = models.TextField(default="", max_length=255)
+    phone = models.TextField(default="", max_length=20)
     invoice_ref_number = models.CharField(max_length=500, default=auto_increment_invoice, null=True, blank=True)
     grand_total = models.DecimalField(max_digits=10, decimal_places=2)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)

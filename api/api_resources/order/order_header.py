@@ -16,10 +16,14 @@ from tastypie.constants import ALL
 from tastypie.resources import ModelResource, ALL_WITH_RELATIONS
 
 # models
+from api.api_resources.aparment.apartment_resource import ApartmentResource
+from api.api_resources.aparment.tower_resource import TowerResource
 from api.api_resources.order.order_status_resource import OrderStatusResource
 from api.api_resources.order.type_selling import TypeSellingResource
 from api.api_resources.product.product_resource import ProductResource
 from api.api_resources.user_resource import UserResource
+from api.models.apartment.apartment import Apartment
+from api.models.apartment.tower import Tower
 from api.models.benefit.commission_percentage import CommissionPercentage
 from api.models.order.order_header import OrderHeader
 from api.models.room.feature import Feature
@@ -29,6 +33,8 @@ logger = logging.getLogger('api.order_header')
 
 class OrderHeaderResource(ModelResource):
     type_selling = fields.ToOneField(TypeSellingResource, attribute='type_selling', full=True, null=True)
+    tower = fields.ToOneField(TowerResource, attribute='tower', full=True, null=True)
+    apartment = fields.ToOneField(ApartmentResource, attribute='apartment', full=True, null=True)
     order_status = fields.ToOneField(OrderStatusResource, attribute='order_status', full=True, null=True)
     product = fields.ToOneField(ProductResource, attribute='product', full=True, null=True)
     user = fields.ToOneField(UserResource, attribute='user', full=True, null=True)
@@ -174,6 +180,10 @@ class OrderHeaderResource(ModelResource):
                         user_id=user_id,
                         payment_date=timezone.now(),
                         order_status_id=1,
+                        apartment=None,
+                        tower=None,
+                        description="",
+                        phone="",
                         expired_date=timezone.now() + timedelta(days=1),
                         check_in_time=datetime.strptime(checkIn, DATETIME_FORMAT),
                         check_out_time=datetime.strptime(checkOut, DATETIME_FORMAT)
@@ -187,12 +197,25 @@ class OrderHeaderResource(ModelResource):
                         user_id=user_id,
                         payment_date=timezone.now(),
                         order_status_id=1,
+                        apartment=None,
+                        tower=None,
+                        description="",
+                        phone="",
                         expired_date=timezone.now() + timedelta(days=1),
                         check_in_time=timezone.now(),
                         check_out_time=timezone.now()
                     )
                 else:
+                    customField3 = json.loads(data['custom_field3'])
+                    tower_id = customField3['tower_id']
+                    apartment_id = customField3['apartment_id']
+                    phone = customField3['phone']
+                    description = customField3['description']
+
+                    tower = Tower.objects.get(pk=tower_id)
+                    apartment = Apartment.objects.get(pk=apartment_id)
                     feature = Feature.objects.get(pk=data['item_details'][0]['id'])
+
                     order_header = OrderHeader.objects.create(
                         midtrans_id=data["transaction_details"]["order_id"],
                         product_id=feature.product_id,
@@ -201,6 +224,10 @@ class OrderHeaderResource(ModelResource):
                         user_id=user_id,
                         payment_date=timezone.now(),
                         order_status_id=1,
+                        apartment=apartment,
+                        tower=tower,
+                        description=description,
+                        phone=phone,
                         expired_date=timezone.now() + timedelta(days=1),
                         check_in_time=datetime.strptime(checkIn, DATETIME_FORMAT),
                         check_out_time=datetime.strptime(checkIn, DATETIME_FORMAT)

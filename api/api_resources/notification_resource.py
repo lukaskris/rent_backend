@@ -68,6 +68,12 @@ class NotificationResource(ModelResource):
                     transaction_type = payment_type
                     if "approval_code" in data.keys():
                         payment_number = data.get('approval_code', '')
+                elif payment_type == "cimb_clicks":
+                    transaction_type = "cimb click"
+                    payment_number = data.get('approval_code', '')
+                elif payment_type == "danamon_online":
+                    transaction_type = "danamon online"
+                    payment_number = data.get('approval_code', '')
                 elif payment_type == "cstore":
                     transaction_type = data.get('store', '')
                     payment_number = data.get('payment_code', '')
@@ -75,7 +81,7 @@ class NotificationResource(ModelResource):
                 if transaction_status == "pending":
                     message_notification = "Transaksi sedang menunggu pembayaran!."
                     order_status_id = 1
-                elif transaction_status == "settlement":
+                elif transaction_status == "settlement" or transaction_status == "capture":
                     message_notification = "Pembayaran berhasil di verifikasi"
                     order_status_id = 2
                 elif transaction_status == "expire" or transaction_status == "cancel":

@@ -8,7 +8,7 @@ from api.api_resources.user_resource import UserResource
 
 
 class ProductResource(ModelResource):
-    created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=False)
+    created_by = fields.ToOneField(UserResource, attribute='created_by', full=True, null=True)
 
     class Meta:
         queryset = Product.objects.all()

@@ -14,5 +14,6 @@ class LocationResource(ModelResource):
         authorization = Authorization()
         filtering = {
             'id': ALL,
+            'name': ALL,
             'active': ALL
         }

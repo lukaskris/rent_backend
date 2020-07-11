@@ -39,15 +39,18 @@ def search(self, request):
         sort = request.GET.get('sort', '1')
         filter = int(request.GET.get('filter', 0))
         tower = int(request.GET.get('tower', 0))
+        location = int(request.GET.get('location', 0))
         offset = int(request.GET.get('offset', 0))
         type_selling = int(request.GET.get('type_selling_id', 1))
         check_in = request.GET.get('check_in')
         check_out = request.GET.get('check_out')
 
         query_ads = SearchQuery.ads_query(order_by=sort, offset=offset / 10, check_in=check_in,
-                                          check_out=check_out, type_booking=type_selling, filter_by=filter, tower=tower)
+                                          check_out=check_out, type_booking=type_selling, filter_by=filter,
+                                          tower=tower, location=location)
         query = SearchQuery.non_ads_query(order_by=sort, offset=offset / 10, check_in=check_in,
-                                          check_out=check_out, type_booking=type_selling, filter_by=filter, tower=tower)
+                                          check_out=check_out, type_booking=type_selling, filter_by=filter,
+                                          tower=tower, location=location)
 
         cursor = connection.cursor()
 

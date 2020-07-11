@@ -64,7 +64,7 @@ class SearchQuery:
         ON
             order_headers.product_id = api_product.product_id
         WHERE
-            api_room.room_id {ads_non_ads} (SELECT room_id FROM ads_view) {filter_apartment} {tower}
+            api_room.room_id {ads_non_ads} (SELECT room_id FROM ads_view) {filter_apartment} {tower} {location}
         ORDER BY 
             {order_by}
         OFFSET {offset}
@@ -73,7 +73,7 @@ class SearchQuery:
     """
 
     @classmethod
-    def ads_query(cls, type_booking, check_in, check_out, offset, filter_by, tower, order_by):
+    def ads_query(cls, type_booking, check_in, check_out, offset, filter_by, tower, location, order_by):
         if order_by == SortType.RECOMMENDED:
             query_order_by = "order_headers.count"
         elif order_by == SortType.LOW_PRICE:
@@ -90,6 +90,11 @@ class SearchQuery:
             tower_apartment = 'AND api_room.tower_id = %d' % tower
         else:
             tower_apartment = ''
+
+        if location != 0:
+            location_apartment = 'AND api_apartment.location_id = %d' % location
+        else:
+            location_apartment = ''
 
         if check_in is None or check_out is None:
             check_in_check_out = ''
@@ -101,10 +106,10 @@ class SearchQuery:
 
         return cls.query.format(check_in_check_out=check_in_check_out, offset=offset, type_booking=type_booking,
                                 order_by=query_order_by, ads_non_ads='IN', ads_field='TRUE AS ADS', filter_apartment=filter_apartment,
-                                tower=tower_apartment)
+                                tower=tower_apartment, location=location_apartment)
 
     @classmethod
-    def non_ads_query(cls, type_booking, check_in, check_out, offset, filter_by, tower, order_by):
+    def non_ads_query(cls, type_booking, check_in, check_out, offset, filter_by, tower, location, order_by):
         if order_by == SortType.RECOMMENDED:
             query_order_by = "order_headers.count"
         elif order_by == SortType.LOW_PRICE:
@@ -122,6 +127,11 @@ class SearchQuery:
         else:
             tower_apartment = ''
 
+        if location != 0:
+            location_apartment = 'AND api_apartment.location_id = %d' % location
+        else:
+            location_apartment = ''
+
         if check_in is None or check_out is None:
             check_in_check_out = ''
         else:
@@ -132,4 +142,4 @@ class SearchQuery:
 
         return cls.query.format(check_in_check_out=check_in_check_out, offset=offset, type_booking=type_booking,
                                 order_by=query_order_by, ads_non_ads="NOT IN", ads_field='FALSE AS ADS', filter_apartment=filter_apartment,
-                                tower=tower_apartment)
+                                tower=tower_apartment, location=location_apartment)

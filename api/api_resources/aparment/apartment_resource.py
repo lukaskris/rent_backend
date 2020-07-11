@@ -6,7 +6,7 @@ from django.db import transaction
 from django.http import JsonResponse
 from tastypie import fields
 from tastypie.authorization import Authorization
-from tastypie.constants import ALL
+from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.resources import ModelResource
 from tastypie.utils import trailing_slash
 
@@ -31,7 +31,8 @@ class ApartmentResource(ModelResource):
         filtering = {
             'id': ALL,
             'active': ALL,
-            'name': ALL
+            'name': ALL,
+            'location': ALL_WITH_RELATIONS
         }
 
     def prepend_urls(self):

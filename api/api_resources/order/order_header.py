@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import json
 import logging
 from datetime import timedelta, datetime
@@ -28,6 +29,7 @@ from api.models.apartment.tower import Tower
 from api.models.benefit.commission_percentage import CommissionPercentage
 from api.models.order.order_header import OrderHeader
 from api.models.room.feature import Feature
+from api.models.room.room import Room
 from api.util.utils import render_to_pdf
 import locale
 
@@ -268,39 +270,59 @@ class OrderHeaderResource(ModelResource):
         template = get_template('report.html')
         percentage = CommissionPercentage.objects.first().percentage
         datetime_test = timezone.now().today()
-        order_header_month = self.nonechecker(OrderHeader.objects.filter(
+        order_header_month = decimal.Decimal(0)
+        details = []
+
+        orders_data = OrderHeader.objects.filter(
             type_selling__isnull=False,
             order_status_id=2,
             active=True,
             order_date__month=datetime_test.month
-        ).aggregate(Sum('grand_total'))["grand_total__sum"])
+        )
+
+        for data in orders_data:
+            detail_product = Room.objects.get(pk=data.product.product_id)
+            commission = data.grand_total * (percentage / 100)
+            income = data.grand_total * ((10 - percentage) / 100)
+
+            order_header_month += decimal.Decimal(data.grand_total)
+            details.append(
+                {
+                    'date': data.order_date.strftime('%d%m%Y'),
+                    'name': "%s, %s, %s".format(detail_product.apartment.name, detail_product.tower.name, detail_product.name),
+                    'price': 'IDR {:20,.0f}'.format(data.grand_total),
+                    'income': 'IDR {:20,.0f}'.format(income),
+                    'commission': 'IDR {:20,.0f}'.format(commission),
+
+                }
+            )
+
         commission_month = order_header_month * (percentage / 100)
         admin_balance_month = order_header_month * ((10 - percentage) / 100)
 
-
         context = {
-            "month": "Juli",
-            "total_income": '{:20,.0f}'.format(),
-            "total_commission": '{:20,.0f}'.format(commission_month),
-            "total_rent": admin_balance_month,
-            "details": [
-                {
-                    "date": "12/07/2020",
-                    "name": "Apartemen glukensi",
-                    "price": "IDR 27.000.000",
-                    "income": "IDR 2.000.000",
-                    "commission": "IDR 2.000.000"
-                },
-                {
-                    "date": "12/07/2020",
-                    "name": "Apartemen glukensi",
-                    "price": "IDR 27.000.000",
-                    "income": "IDR 2.000.000",
-                    "commission": "IDR 2.000.000"
-                }
-            ]
+            "month": datetime_test.strftime('%B'),
+            "total_income": 'IDR {:20,.0f}'.format(admin_balance_month),
+            "total_commission": 'IDR {:20,.0f}'.format(commission_month),
+            "total_rent": 'IDR {:20,.0f}'.format(order_header_month),
+            "details": details
+            # "details": [
+            #     {
+            #         "date": "12/07/2020",
+            #         "name": "Apartemen glukensi",
+            #         "price": "IDR 27.000.000",
+            #         "income": "IDR 2.000.000",
+            #         "commission": "IDR 2.000.000"
+            #     },
+            #     {
+            #         "date": "12/07/2020",
+            #         "name": "Apartemen glukensi",
+            #         "price": "IDR 27.000.000",
+            #         "income": "IDR 2.000.000",
+            #         "commission": "IDR 2.000.000"
+            #     }
+            # ]
         }
-        html = template.render(context)
         pdf = render_to_pdf('report.html', context)
         if pdf:
             response = HttpResponse(pdf, content_type='application/pdf')

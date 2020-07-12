@@ -52,7 +52,8 @@ class OrderHeaderResource(ModelResource):
             'type_selling': ALL_WITH_RELATIONS,
             'active': ALL,
             'order_date': ALL,
-            'order_status': ALL_WITH_RELATIONS
+            'order_status': ALL_WITH_RELATIONS,
+            'apartment': ALL_WITH_RELATIONS
         }
 
     def prepend_urls(self):

@@ -10,6 +10,7 @@ from django.conf.urls import url
 from django.db import transaction
 from django.db.models import Sum
 from django.http import HttpResponse, JsonResponse
+from django.template.loader import get_template
 from django.utils import timezone
 from tastypie import fields
 from tastypie.constants import ALL
@@ -27,6 +28,8 @@ from api.models.apartment.tower import Tower
 from api.models.benefit.commission_percentage import CommissionPercentage
 from api.models.order.order_header import OrderHeader
 from api.models.room.feature import Feature
+from api.util.utils import render_to_pdf
+import locale
 
 logger = logging.getLogger('api.order_header')
 
@@ -69,6 +72,11 @@ class OrderHeaderResource(ModelResource):
                 r"" %
                 resource_name,
                 self.wrap_view('admin_report'), name="api_admin_report"),
+            # report
+            url(r"^(?P<resource_name>%s)/report_monthly"
+                r"" %
+                resource_name,
+                self.wrap_view('admin_report_monthly'), name="api_admin_report_view"),
         ]
 
     def nonechecker(self, value):
@@ -255,3 +263,52 @@ class OrderHeaderResource(ModelResource):
                     "message": str(e)
                 }
             }, content_type='application/json', status=500)
+
+    def admin_report_monthly(self, request, **kwargs):
+        template = get_template('report.html')
+        percentage = CommissionPercentage.objects.first().percentage
+        datetime_test = timezone.now().today()
+        order_header_month = self.nonechecker(OrderHeader.objects.filter(
+            type_selling__isnull=False,
+            order_status_id=2,
+            active=True,
+            order_date__month=datetime_test.month
+        ).aggregate(Sum('grand_total'))["grand_total__sum"])
+        commission_month = order_header_month * (percentage / 100)
+        admin_balance_month = order_header_month * ((10 - percentage) / 100)
+
+
+        context = {
+            "month": "Juli",
+            "total_income": '{:20,.0f}'.format(),
+            "total_commission": '{:20,.0f}'.format(commission_month),
+            "total_rent": admin_balance_month,
+            "details": [
+                {
+                    "date": "12/07/2020",
+                    "name": "Apartemen glukensi",
+                    "price": "IDR 27.000.000",
+                    "income": "IDR 2.000.000",
+                    "commission": "IDR 2.000.000"
+                },
+                {
+                    "date": "12/07/2020",
+                    "name": "Apartemen glukensi",
+                    "price": "IDR 27.000.000",
+                    "income": "IDR 2.000.000",
+                    "commission": "IDR 2.000.000"
+                }
+            ]
+        }
+        html = template.render(context)
+        pdf = render_to_pdf('report.html', context)
+        if pdf:
+            response = HttpResponse(pdf, content_type='application/pdf')
+            filename = "Invoice_%s.pdf" % ("12341231")
+            content = "inline; filename='%s'" % (filename)
+            download = request.GET.get("download")
+            if download:
+                content = "attachment; filename='%s'" % (filename)
+            response['Content-Disposition'] = content
+            return response
+        return HttpResponse("Not found")

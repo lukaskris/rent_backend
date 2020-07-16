@@ -30,6 +30,7 @@ from api.models.benefit.commission_percentage import CommissionPercentage
 from api.models.order.order_header import OrderHeader
 from api.models.room.feature import Feature
 from api.models.room.room import Room
+from api.models.user.user import User
 from api.util.utils import render_to_pdf
 import locale
 
@@ -74,11 +75,16 @@ class OrderHeaderResource(ModelResource):
                 r"" %
                 resource_name,
                 self.wrap_view('admin_report'), name="api_admin_report"),
-            # report
-            url(r"^(?P<resource_name>%s)/report_monthly"
+            # report admin
+            url(r"^(?P<resource_name>%s)/report_monthly/"
                 r"" %
                 resource_name,
                 self.wrap_view('admin_report_monthly'), name="api_admin_report_view"),
+            # report marketing
+            url(r"^(?P<resource_name>%s)/report_monthly_marketing/"
+                r"" %
+                resource_name,
+                self.wrap_view('admin_report_monthly_marketing'), name="api_admin_report_marketing_view"),
         ]
 
     def nonechecker(self, value):
@@ -305,25 +311,86 @@ class OrderHeaderResource(ModelResource):
             "total_income": 'IDR {:20,.0f}'.format(admin_balance_month),
             "total_commission": 'IDR {:20,.0f}'.format(commission_month),
             "total_rent": 'IDR {:20,.0f}'.format(order_header_month),
+            "date": datetime_test.strftime("%d %B %Y"),
             "details": details
-            # "details": [
-            #     {
-            #         "date": "12/07/2020",
-            #         "name": "Apartemen glukensi",
-            #         "price": "IDR 27.000.000",
-            #         "income": "IDR 2.000.000",
-            #         "commission": "IDR 2.000.000"
-            #     },
-            #     {
-            #         "date": "12/07/2020",
-            #         "name": "Apartemen glukensi",
-            #         "price": "IDR 27.000.000",
-            #         "income": "IDR 2.000.000",
-            #         "commission": "IDR 2.000.000"
-            #     }
-            # ]
         }
         pdf = render_to_pdf('report.html', context)
+        if pdf:
+            response = HttpResponse(pdf, content_type='application/pdf')
+            filename = "Invoice_%s.pdf" % ("12341231")
+            content = "inline; filename='%s'" % (filename)
+            download = request.GET.get("download")
+            if download:
+                content = "attachment; filename='%s'" % (filename)
+            response['Content-Disposition'] = content
+            return response
+        return HttpResponse("Not found")
+
+
+    def admin_report_monthly_marketing(self, request, **kwargs):
+        user_id = request.GET.get('user_id', 0)
+        user = User.objects.get(pk=user_id)
+        percentage = CommissionPercentage.objects.first().percentage
+        datetime_test = timezone.now().today()
+        order_header_month = decimal.Decimal(0)
+        details = []
+
+        orders_data = OrderHeader.objects.filter(
+            type_selling__isnull=False,
+            order_status_id=2,
+            active=True,
+            order_date__month=datetime_test.month,
+            product__created_by__id=user.id,
+        )
+
+        for data in orders_data:
+            detail_product = Room.objects.get(pk=data.product.product_id)
+            commission = data.grand_total * (percentage / 100)
+            income = data.grand_total * ((10 - percentage) / 100)
+
+            order_header_month += decimal.Decimal(data.grand_total)
+            details.append(
+                {
+                    'date': data.order_date.strftime('%d%m%Y'),
+                    'invoice': data.invoice,
+                    'name': "%s, %s, %s".format(detail_product.apartment.name, detail_product.tower.name, detail_product.name),
+                    'price': 'IDR {:20,.0f}'.format(data.grand_total),
+                    'income': 'IDR {:20,.0f}'.format(income),
+                    'commission': 'IDR {:20,.0f}'.format(commission),
+
+                }
+            )
+
+        commission_month = order_header_month * (percentage / 100)
+        admin_balance_month = order_header_month * ((10 - percentage) / 100)
+
+        context = {
+            "month": datetime_test.strftime('%B'),
+            "name": user.name,
+            "phone": user.phone_number,
+            "total_income": 'IDR {:20,.0f}'.format(admin_balance_month),
+            "total_commission": 'IDR {:20,.0f}'.format(commission_month),
+            "total_rent": 'IDR {:20,.0f}'.format(order_header_month),
+            "date": datetime_test.strftime("%d %B %Y"),
+            # "details": details
+            "details": [
+                {
+                    "date": "12/07/2020",
+                    "invoice": "SE/0303/2010",
+                    "name": "Apartemen glukensi",
+                    "price": "IDR 27.000.000",
+                    "commission": "IDR 2.000.000"
+                },
+                {
+                    "date": "12/07/2020",
+                    "invoice": "SE/0303/2010",
+                    "name": "Apartemen glukensi",
+                    "price": "IDR 27.000.000",
+                    "commission": "IDR 2.000.000"
+                }
+            ]
+        }
+        pdf = render_to_pdf('report_marketing.html', context)
         if pdf:
             response = HttpResponse(pdf, content_type='application/pdf')
             filename = "Invoice_%s.pdf" % ("12341231")

@@ -149,6 +149,11 @@
   <body>
     <header class="clearfix">
       <h1 style="padding-top:10px">LAPORAN JUNI</h1>
+      <div id="project">
+        <div><span>NAME</span> {{name}}</div>
+        <div><span>PHONE</span> {{phone}}</div>
+        <div><span>DATE</span> {{date}}</div>
+      </div>
     </header>
     <main>
       <table>
@@ -158,7 +163,6 @@
             <th class="service">INVOICE</th>
             <th class="desc">DESKRIPSI</th>
             <th>HARGA SEWA</th>
-            <th>PENDAPATAN</th>
             <th>KOMISI</th>
           </tr>
         </thead>
@@ -169,7 +173,6 @@
             <td class="service">{{ detail.invoice }}</td>
             <td class="desc">{{ detail.name }}</td>
             <td class="qty">{{ detail.price }}</td>
-            <td class="qty">{{ detail.income }}</td>
             <td class="total">{{ detail.commission }}</td>
           </tr>
           {% endfor %}
@@ -194,7 +197,6 @@
           <tr>
             <td colspan="3" class="grand total">GRAND TOTAL</td>
             <td class="grand total">{{ total_rent }}</td>
-            <td class="grand total">{{ total_income }}</td>
             <td class="grand total">{{ total_commission }}</td>
           </tr>
         </tbody>

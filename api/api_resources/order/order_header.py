@@ -353,7 +353,7 @@ class OrderHeaderResource(ModelResource):
         pdf = render_to_pdf('report.html', context)
         if pdf:
             response = HttpResponse(pdf, content_type='application/pdf')
-            filename = "Invoice_%s.pdf" % ("12341231")
+            filename = "Report_%s.pdf" % int(datetime_test.timestamp())
             content = "inline; filename='%s'" % (filename)
             download = request.GET.get("download")
             if download:
@@ -448,7 +448,7 @@ class OrderHeaderResource(ModelResource):
         pdf = render_to_pdf('report_marketing.html', context)
         if pdf:
             response = HttpResponse(pdf, content_type='application/pdf')
-            filename = "Invoice_%s.pdf" % ("12341231")
+            filename = "Report_%s.pdf" % int(datetime_test.timestamp())
             content = "inline; filename='%s'" % (filename)
             download = request.GET.get("download")
             if download:

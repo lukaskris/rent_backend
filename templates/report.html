@@ -17,7 +17,7 @@
         text-decoration: underline;
       }
       @page {
-        size: letter portrait;
+        size: letter landscape;
         margin: 2cm;
 
       }
@@ -144,6 +144,15 @@
         padding: 8px 0;
         text-align: center;
       }
+      .column1{
+        width:10%;
+      }
+      .column2{
+        width:15%;
+      }
+      .column3{
+        width:30%;
+      }
     </style>
   </head>
   <body>
@@ -154,23 +163,27 @@
       <table>
         <thead>
           <tr>
-            <th class="service">DATE</th>
-            <th class="service">INVOICE</th>
-            <th class="desc">DESKRIPSI</th>
-            <th>HARGA SEWA</th>
-            <th>PENDAPATAN</th>
-            <th>KOMISI</th>
+            <th class="service column1">INVOICE</th>
+            <th class="desc column3">DESKRIPSI</th>
+            <th class="service column1">DURASI</th>
+            <th class="service column1">CHECKIN CHECKOUT</th>
+            <th class="service column1">MARKETING</th>
+            <th class="column2">KOMISI KANTOR</th>
+            <th class="column2">TOTAL YANG DITERIMA PEMILIK</th>
           </tr>
         </thead>
         <tbody>
           {% for detail in details %}
           <tr>
-            <td class="service">{{ detail.date }}</td>
-            <td class="service">{{ detail.invoice }}</td>
-            <td class="desc">{{ detail.name }}</td>
-            <td class="qty">{{ detail.price }}</td>
-            <td class="qty">{{ detail.income }}</td>
-            <td class="total">{{ detail.commission }}</td>
+            <td class="service column1">{{ detail.invoice }}</td>
+            <td class="desc column3">
+              {{ detail.name }} {{ detail.apartment }} ({{detail.tower}}) {{ detail.description }}
+            </td>
+            <td class="service column1">{{ detail.duration }}</td>
+            <td class="service column1">{{ detail.checkin }} - {{detail.checkout}}</td>
+            <td class="service column1">{{ detail.marketing_name }} ({{detail.marketing_phone}})</td>
+            <td class="qty column2">{{ detail.office_commission }}</td>
+            <td class="total column2">{{ detail.owner_commission }}</td>
           </tr>
           {% endfor %}
 <!--          <tr>-->
@@ -192,10 +205,9 @@
 <!--            <td class="total">IDR 5,200.00</td>-->
 <!--          </tr>-->
           <tr>
-            <td colspan="3" class="grand total">GRAND TOTAL</td>
+            <td colspan="5" class="grand total">GRAND TOTAL</td>
             <td class="grand total">{{ total_rent }}</td>
             <td class="grand total">{{ total_income }}</td>
-            <td class="grand total">{{ total_commission }}</td>
           </tr>
         </tbody>
       </table>

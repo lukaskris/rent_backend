@@ -32,7 +32,6 @@ from api.models.room.feature import Feature
 from api.models.room.room import Room
 from api.models.user.user import User
 from api.util.utils import render_to_pdf
-import locale
 
 logger = logging.getLogger('api.order_header')
 
@@ -273,7 +272,6 @@ class OrderHeaderResource(ModelResource):
             }, content_type='application/json', status=500)
 
     def admin_report_monthly(self, request, **kwargs):
-        template = get_template('report.html')
         percentage = CommissionPercentage.objects.first().percentage
         datetime_test = timezone.now().today()
         order_header_month = decimal.Decimal(0)
@@ -288,29 +286,67 @@ class OrderHeaderResource(ModelResource):
 
         for data in orders_data:
             detail_product = Room.objects.get(pk=data.product.product_id)
-            commission = data.grand_total * (percentage / 100)
             income = data.grand_total * ((10 - percentage) / 100)
-
+            owner_commission = data.grand_total - income
             order_header_month += decimal.Decimal(data.grand_total)
+            different_date = data.check_out_time - data.check_in_time
+            month = different_date.days // 30
+            year = different_date.days // 365
+            days = different_date.days % 30
+
+            if month == 0:
+                duration = "%d hari" % (days)
+            elif 0 < month < 12:
+                if days > 0:
+                    duration = "%d bulan %d hari" % (month, days)
+                else:
+                    duration = "%d bulan" % (month)
+            else:
+                duration = "%d tahun" % (year)
+
             details.append(
                 {
-                    'date': data.order_date.strftime('%d%m%Y'),
-                    'name': "%s, %s, %s".format(detail_product.apartment.name, detail_product.tower.name, detail_product.name),
-                    'price': 'IDR {:20,.0f}'.format(data.grand_total),
-                    'income': 'IDR {:20,.0f}'.format(income),
-                    'commission': 'IDR {:20,.0f}'.format(commission),
+                    'name': detail_product.name,
+                    "apartment": detail_product.apartment.name,
+                    "tower": detail_product.tower.name,
+                    "description": detail_product.description,
+                    "duration": duration,
+                    'invoice': data.invoice,
+                    "checkin": data.check_in_time.strftime("%d/%M%Y"),
+                    "checkout": data.check_out_time.strftime("%d/%M%Y"),
+                    "marketing_name": detail_product.contact_person_name,
+                    "marketing_phone": detail_product.contact_person_phone,
+                    'owner_commission': 'IDR {:20,.0f}'.format(owner_commission),
+                    'office_commission': 'IDR {:20,.0f}'.format(income),
 
                 }
             )
 
-        commission_month = order_header_month * (percentage / 100)
+        details.append(
+            {
+                "invoice": "SE/029101",
+                'name': "Ruangan ABC",
+                "apartment": "Apartement A",
+                "tower": "Tower B",
+                "description": "Unit 1401",
+                "duration": "1 bulan",
+                "checkin": "10/04/2020",
+                "checkout": "09/05/2020",
+                "marketing_name": "Budi",
+                "marketing_phone": "08918181811",
+                'owner_commission': "IDR 4.300.000.000",
+                'office_commission': "IDR 172.000.000",
+
+            }
+        )
+
         admin_balance_month = order_header_month * ((10 - percentage) / 100)
+        total_rent = order_header_month - admin_balance_month
 
         context = {
             "month": datetime_test.strftime('%B'),
             "total_income": 'IDR {:20,.0f}'.format(admin_balance_month),
-            "total_commission": 'IDR {:20,.0f}'.format(commission_month),
-            "total_rent": 'IDR {:20,.0f}'.format(order_header_month),
+            "total_rent": 'IDR {:20,.0f}'.format(total_rent),
             "date": datetime_test.strftime("%d %B %Y"),
             "details": details
         }
@@ -339,56 +375,75 @@ class OrderHeaderResource(ModelResource):
             type_selling__isnull=False,
             order_status_id=2,
             active=True,
-            order_date__month=datetime_test.month,
-            product__created_by__id=user.id,
+            order_date__month=datetime_test.month
         )
 
         for data in orders_data:
             detail_product = Room.objects.get(pk=data.product.product_id)
-            commission = data.grand_total * (percentage / 100)
             income = data.grand_total * ((10 - percentage) / 100)
-
+            owner_commission = data.grand_total - income
             order_header_month += decimal.Decimal(data.grand_total)
+            different_date = data.check_out_time - data.check_in_time
+            month = different_date.days // 30
+            year = different_date.days // 365
+            days = different_date.days % 30
+
+            if month == 0:
+                duration = "%d hari" % (days)
+            elif 0 < month < 12:
+                if days > 0:
+                    duration = "%d bulan %d hari" % (month, days)
+                else:
+                    duration = "%d bulan" % (month)
+            else:
+                duration = "%d tahun" % (year)
+
             details.append(
                 {
-                    'date': data.order_date.strftime('%d%m%Y'),
+                    'name': detail_product.name,
+                    "apartment": detail_product.apartment.name,
+                    "tower": detail_product.tower.name,
+                    "description": detail_product.description,
+                    "duration": duration,
                     'invoice': data.invoice,
-                    'name': "%s, %s, %s".format(detail_product.apartment.name, detail_product.tower.name, detail_product.name),
-                    'price': 'IDR {:20,.0f}'.format(data.grand_total),
-                    'income': 'IDR {:20,.0f}'.format(income),
-                    'commission': 'IDR {:20,.0f}'.format(commission),
+                    "checkin": data.check_in_time.strftime("%d/%M%Y"),
+                    "checkout": data.check_out_time.strftime("%d/%M%Y"),
+                    "marketing_name": detail_product.contact_person_name,
+                    "marketing_phone": detail_product.contact_person_phone,
+                    'owner_commission': 'IDR {:20,.0f}'.format(owner_commission),
+                    'commission': 'IDR {:20,.0f}'.format(income),
 
                 }
             )
 
-        commission_month = order_header_month * (percentage / 100)
-        admin_balance_month = order_header_month * ((10 - percentage) / 100)
+        details.append(
+            {
+                "invoice": "SE/029101",
+                'name': "Ruangan ABC",
+                "apartment": "Apartement A",
+                "tower": "Tower B",
+                "description": "Unit 1401",
+                "duration": "1 bulan",
+                "checkin": "10/04/2020",
+                "checkout": "09/05/2020",
+                "marketing_name": "Budi",
+                "marketing_phone": "08918181811",
+                'owner_commission': "IDR 4.300.000",
+                'commission': "IDR 258.000",
+
+            }
+        )
+        marketing_balance_month = order_header_month * (percentage / 100)
+        total_rent = order_header_month - marketing_balance_month
 
         context = {
-            "month": datetime_test.strftime('%B'),
             "name": user.name,
             "phone": user.phone_number,
-            "total_income": 'IDR {:20,.0f}'.format(admin_balance_month),
-            "total_commission": 'IDR {:20,.0f}'.format(commission_month),
-            "total_rent": 'IDR {:20,.0f}'.format(order_header_month),
+            "month": datetime_test.strftime('%B'),
+            "total_income": 'IDR {:20,.0f}'.format(marketing_balance_month),
+            "total_rent": 'IDR {:20,.0f}'.format(total_rent),
             "date": datetime_test.strftime("%d %B %Y"),
-            # "details": details
-            "details": [
-                {
-                    "date": "12/07/2020",
-                    "invoice": "SE/0303/2010",
-                    "name": "Apartemen glukensi",
-                    "price": "IDR 27.000.000",
-                    "commission": "IDR 2.000.000"
-                },
-                {
-                    "date": "12/07/2020",
-                    "invoice": "SE/0303/2010",
-                    "name": "Apartemen glukensi",
-                    "price": "IDR 27.000.000",
-                    "commission": "IDR 2.000.000"
-                }
-            ]
+            "details": details
         }
         pdf = render_to_pdf('report_marketing.html', context)
         if pdf:

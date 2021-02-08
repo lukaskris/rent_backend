@@ -23,7 +23,7 @@ gunicorn==20.0.4
 helper==2.4.2
 html5lib==1.1
 httpie==2.0.0
-httplib2==0.16.0
+httplib2==0.19.0
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.10.1

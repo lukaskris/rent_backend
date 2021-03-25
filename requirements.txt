@@ -43,7 +43,7 @@ PyPDF2==1.26.0
 python-dateutil==2.8.1
 python-mimeparse==1.6.0
 pytz==2019.1
-PyYAML==5.3.1
+PyYAML==5.4
 query-string==2019.4.13
 reportlab==3.5.44
 request==2019.4.13

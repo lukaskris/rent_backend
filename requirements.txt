@@ -22,7 +22,7 @@ get==2019.4.13
 gunicorn==20.0.4
 helper==2.4.2
 html5lib==1.1
-httpie==2.0.0
+httpie==3.1.0
 httplib2==0.16.0
 idna==2.8
 itsdangerous==1.1.0
